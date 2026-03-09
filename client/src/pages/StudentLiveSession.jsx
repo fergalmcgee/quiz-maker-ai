@@ -43,6 +43,15 @@ export default function StudentLiveSession({ user }) {
                     } else {
                         const quizRes = await fetch(`http://localhost:3001/api/quizzes/${sessData.quiz_id}`);
                         const quizData = await quizRes.json();
+
+                        // Intercept and shuffle questions if randomize flag is true and mode is async
+                        if (sessData.mode === 'async' && sessData.randomize_questions === 1) {
+                            for (let i = quizData.questions.length - 1; i > 0; i--) {
+                                const j = Math.floor(Math.random() * (i + 1));
+                                [quizData.questions[i], quizData.questions[j]] = [quizData.questions[j], quizData.questions[i]];
+                            }
+                        }
+
                         setQuiz(quizData);
 
                         // 1. Gather all unique image URLs from the quiz
@@ -115,7 +124,7 @@ export default function StudentLiveSession({ user }) {
         setSocket(newSocket);
 
         newSocket.on('connect', () => {
-            newSocket.emit('join_session', { sessionId, userId: user.id, role: 'student' });
+            newSocket.emit('join_session', { sessionId, userId: user.id, username: user.username, role: 'student' });
         });
 
         newSocket.on('session_state', (state) => {
@@ -315,6 +324,26 @@ export default function StudentLiveSession({ user }) {
                     {currentQ.image_url && (
                         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                             <img src={currentQ.image_url} alt="Question Context" style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: 'var(--radius-sm)' }} />
+                        </div>
+                    )}
+
+                    {currentQ.code_snippet && (
+                        <div style={{ marginBottom: '2rem', textAlign: 'left' }}>
+                            <pre style={{
+                                backgroundColor: '#1E293B',
+                                color: '#F8FAFC',
+                                padding: '1.5rem',
+                                borderRadius: 'var(--radius-md)',
+                                overflowX: 'auto',
+                                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                                fontSize: '1rem',
+                                lineHeight: '1.5',
+                                boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)'
+                            }}>
+                                <code className={currentQ.code_language ? `language-${currentQ.code_language}` : ''}>
+                                    {currentQ.code_snippet}
+                                </code>
+                            </pre>
                         </div>
                     )}
 

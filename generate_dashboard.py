@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import os
+
+code = """import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlusCircle, Users, LayoutDashboard, Play, Globe, Download, Archive, CheckCircle, Search, UserPlus, UserMinus, ChevronLeft, Trash2 } from 'lucide-react';
 
@@ -13,7 +15,6 @@ export default function TeacherDashboard({ user }) {
     const [sessionName, setSessionName] = useState('');
     const [sessionMode, setSessionMode] = useState('live');
     const [sessionTimer, setSessionTimer] = useState('');
-    const [randomizeQuestions, setRandomizeQuestions] = useState(false);
 
     const [showAllQuizzes, setShowAllQuizzes] = useState(false);
     const [showAllPastSessions, setShowAllPastSessions] = useState(false);
@@ -204,7 +205,7 @@ export default function TeacherDashboard({ user }) {
         e.preventDefault();
         if (!title.trim()) { alert("Please provide a title"); return; }
         if (questions.length === 0) { alert("Please add at least one question."); return; }
-
+        
         const validQuestions = questions.filter(q => q.text.trim() || q.image_url);
         if (validQuestions.length === 0) { alert("Questions must have text or an image."); return; }
 
@@ -218,7 +219,7 @@ export default function TeacherDashboard({ user }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title, description, questions: validQuestions, authorId: user.id })
             });
-
+            
             if (res.ok) {
                 setTitle('');
                 setDescription('');
@@ -254,9 +255,9 @@ export default function TeacherDashboard({ user }) {
             return;
         }
 
-        const lines = bulkImportText.split('\n').filter(line => line.trim() !== '');
+        const lines = bulkImportText.split('\\n').filter(line => line.trim() !== '');
         const newQuestions = [...questions];
-
+        
         let currentQuestion = null;
 
         lines.forEach(line => {
@@ -278,7 +279,7 @@ export default function TeacherDashboard({ user }) {
                         currentQuestion.type = 'short_answer';
                     }
                 }
-
+                
                 let qText = line.replace(/^\d+[\.\)]\s+/, '').replace(/^[Qq](uestion)?\s*\d+[\.\:]\s+/, '').trim();
                 currentQuestion = {
                     id: Date.now() + Math.random(),
@@ -298,7 +299,7 @@ export default function TeacherDashboard({ user }) {
                 if (shortAnswerMatch) {
                     isCorrect = 1;
                     optLine = shortAnswerMatch[1].trim();
-                    currentQuestion.type = 'short_answer';
+                     currentQuestion.type = 'short_answer';
                 } else {
                     if (optLine.startsWith('*')) {
                         isCorrect = 1;
@@ -402,7 +403,6 @@ export default function TeacherDashboard({ user }) {
         setSessionName(`${quiz.title} - ${dateStr}`);
         setSessionMode('live'); // Default to live
         setSessionTimer(''); // Reset timer
-        setRandomizeQuestions(false);
     };
 
     const confirmStartSession = async (quizId) => {
@@ -420,8 +420,7 @@ export default function TeacherDashboard({ user }) {
                     mode: sessionMode,
                     name: sessionName,
                     class_id: targetClassId,
-                    time_limit: sessionTimer ? parseInt(sessionTimer) : null,
-                    randomize_questions: randomizeQuestions
+                    time_limit: sessionTimer ? parseInt(sessionTimer) : null
                 })
             });
             const data = await res.json();
@@ -475,21 +474,11 @@ export default function TeacherDashboard({ user }) {
         }
     };
 
-    const handleDeleteQuiz = async (quizId) => {
-        try {
-            const res = await fetch(`http://localhost:3001/api/quizzes/${quizId}`, { method: 'DELETE' });
-            if (res.ok) {
-                fetchQuizzes();
-                fetchCommunityQuizzes();
-                setConfirmDeleteId(null);
-            } else {
-                alert('Failed to delete quiz.');
-            }
-        } catch (e) {
-            console.error(e);
-            alert('Network error while deleting quiz.');
-        }
-    };
+    const confirmDelete = (e) => {
+        e.preventDefault();
+        // Implement delete functionality here.
+        alert('Delete functionality to be implemented');
+    }
 
     const activeSessions = sessions.filter(s => s.status === 'active' && s.is_archived === 0);
     const completedSessions = sessions.filter(s => s.status === 'completed' || s.is_archived === 1);
@@ -551,17 +540,6 @@ export default function TeacherDashboard({ user }) {
                                                 <p style={{ color: 'var(--text-muted)', margin: '0.5rem 0 0 0' }}>{q.description}</p>
                                             </div>
                                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                                {confirmDeleteId === q.id ? (
-                                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', backgroundColor: '#FEF2F2', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid #FECACA' }}>
-                                                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#DC2626', padding: '0 0.5rem' }}>Delete?</span>
-                                                        <button onClick={() => handleDeleteQuiz(q.id)} style={{ backgroundColor: '#DC2626', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}>Yes</button>
-                                                        <button onClick={() => setConfirmDeleteId(null)} style={{ backgroundColor: 'transparent', color: '#6B7280', border: '1px solid #D1D5DB', padding: '0.4rem 0.8rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}>No</button>
-                                                    </div>
-                                                ) : (
-                                                    <button onClick={() => setConfirmDeleteId(q.id)} style={{ backgroundColor: 'transparent', color: '#6B7280', border: '1px solid #D1D5DB', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Delete Quiz">
-                                                        <Trash2 size={18} />
-                                                    </button>
-                                                )}
                                                 <button onClick={() => handleEditClick(q)} style={{ backgroundColor: 'transparent', color: 'var(--text-main)', border: '1px solid var(--border)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600 }}>
                                                     Edit
                                                 </button>
@@ -596,29 +574,17 @@ export default function TeacherDashboard({ user }) {
                                                         </div>
 
                                                         {sessionMode === 'async' && (
-                                                            <>
-                                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                                                    <label style={{ fontWeight: 600, fontSize: '0.9rem' }}>Time Limit (mins):</label>
-                                                                    <input
-                                                                        type="number"
-                                                                        min="1"
-                                                                        placeholder="Optional"
-                                                                        value={sessionTimer}
-                                                                        onChange={e => setSessionTimer(e.target.value)}
-                                                                        style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', flex: 1 }}
-                                                                    />
-                                                                </div>
-                                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
-                                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={randomizeQuestions}
-                                                                            onChange={(e) => setRandomizeQuestions(e.target.checked)}
-                                                                        />
-                                                                        Randomize Questions
-                                                                    </label>
-                                                                </div>
-                                                            </>
+                                                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                                                <label style={{ fontWeight: 600, fontSize: '0.9rem' }}>Time Limit (mins):</label>
+                                                                <input
+                                                                    type="number"
+                                                                    min="1"
+                                                                    placeholder="Optional"
+                                                                    value={sessionTimer}
+                                                                    onChange={e => setSessionTimer(e.target.value)}
+                                                                    style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', flex: 1 }}
+                                                                />
+                                                            </div>
                                                         )}
 
                                                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
@@ -636,8 +602,8 @@ export default function TeacherDashboard({ user }) {
                                     ))}
                                 </div>
                                 {quizzes.length > 5 && (
-                                    <button
-                                        onClick={() => setShowAllQuizzes(!showAllQuizzes)}
+                                    <button 
+                                        onClick={() => setShowAllQuizzes(!showAllQuizzes)} 
                                         style={{ marginTop: '1rem', width: '100%', padding: '0.75rem', backgroundColor: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                                     >
                                         {showAllQuizzes ? 'Collapse List ▲' : `Show All Quizzes (${quizzes.length}) ▼`}
@@ -693,7 +659,7 @@ export default function TeacherDashboard({ user }) {
                                     <input type="text" value={description} onChange={e => setDescription(e.target.value)} placeholder="What is this quiz about?" style={inputStyle} />
                                 </div>
                             </div>
-
+                            
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', marginTop: '1rem' }}>
                                 <h3 style={{ margin: 0 }}>Questions ({questions.length})</h3>
                                 <button type="button" onClick={() => setShowBulkImportModal(true)} style={{ padding: '0.5rem 1rem', backgroundColor: '#DBEAFE', color: '#1D4ED8', border: 'none', borderRadius: 'var(--radius-md)', fontWeight: 600, cursor: 'pointer' }}>
@@ -720,16 +686,15 @@ export default function TeacherDashboard({ user }) {
                                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                                 <div>
                                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>Code Snippet (Optional)</label>
-                                                    <textarea value={q.code_snippet} onChange={e => updateQuestion(q.id, 'code_snippet', e.target.value)} placeholder="def hello_world():
-    print('Hello')" style={{ ...inputStyle, minHeight: '100px', fontFamily: 'monospace' }} onKeyDown={e => {
-                                                            if (e.key === 'Tab') {
-                                                                e.preventDefault();
-                                                                const start = e.target.selectionStart;
-                                                                const end = e.target.selectionEnd;
-                                                                const value = e.target.value;
-                                                                updateQuestion(q.id, 'code_snippet', value.substring(0, start) + "    " + value.substring(end));
-                                                            }
-                                                        }} />
+                                                    <textarea value={q.code_snippet} onChange={e => updateQuestion(q.id, 'code_snippet', e.target.value)} placeholder="def hello_world():\n    print('Hello')" style={{ ...inputStyle, minHeight: '100px', fontFamily: 'monospace' }} onKeyDown={e => {
+                                                        if (e.key === 'Tab') {
+                                                            e.preventDefault();
+                                                            const start = e.target.selectionStart;
+                                                            const end = e.target.selectionEnd;
+                                                            const value = e.target.value;
+                                                            updateQuestion(q.id, 'code_snippet', value.substring(0, start) + "    " + value.substring(end));
+                                                        }
+                                                    }}/>
                                                 </div>
                                                 <div>
                                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>Code Language</label>
@@ -852,8 +817,8 @@ export default function TeacherDashboard({ user }) {
                                         ))}
                                     </div>
                                     {completedSessions.length > 5 && (
-                                        <button
-                                            onClick={() => setShowAllPastSessions(!showAllPastSessions)}
+                                        <button 
+                                            onClick={() => setShowAllPastSessions(!showAllPastSessions)} 
                                             style={{ marginTop: '1rem', width: '100%', padding: '0.75rem', backgroundColor: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                                         >
                                             {showAllPastSessions ? 'Collapse List ▲' : `Show All Past Sessions (${completedSessions.length}) ▼`}
@@ -989,9 +954,7 @@ export default function TeacherDashboard({ user }) {
                         <textarea
                             value={bulkImportText}
                             onChange={(e) => setBulkImportText(e.target.value)}
-                            placeholder="1. What is 2+2?
-* A) 4
-B) 5"
+                            placeholder="1. What is 2+2?\n* A) 4\nB) 5"
                             style={{ ...inputStyle, minHeight: '300px', fontFamily: 'monospace', width: '100%', marginBottom: '1rem' }}
                         />
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
@@ -1028,3 +991,8 @@ const inputStyle = {
     border: '1px solid var(--border)',
     fontSize: '1rem'
 };
+"""
+
+with open("client/src/pages/TeacherDashboard.jsx", "w") as f:
+    f.write(code)
+

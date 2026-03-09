@@ -15,7 +15,7 @@ function App() {
         <BrowserRouter>
             <div className="app-container">
                 <header className="navbar fade-in">
-                    <h1 className="logo">QuizMaker</h1>
+                    <h1 className="logo">U-challenge</h1>
                     {user && (
                         <div style={{ marginLeft: 'auto', display: 'flex', gap: '1rem', alignItems: 'center' }}>
                             <span style={{ fontWeight: 600 }}>{user.username} ({user.role})</span>

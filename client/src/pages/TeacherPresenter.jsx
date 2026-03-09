@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
-import { Bar } from 'react-chartjs-2';
-import {
-    Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend
-} from 'chart.js';
-import { Users, ChevronRight } from 'lucide-react';
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+import { Users, ChevronRight, CheckCircle2, Clock, UserMinus } from 'lucide-react';
 
 export default function TeacherPresenter() {
     const { sessionId } = useParams();
@@ -18,6 +12,9 @@ export default function TeacherPresenter() {
     const [currentIdx, setCurrentIdx] = useState(0);
     const [results, setResults] = useState({});
     const [participants, setParticipants] = useState(0);
+    const [participantDetails, setParticipantDetails] = useState({});
+    const [answeredStudents, setAnsweredStudents] = useState(new Set());
+    const [classStudents, setClassStudents] = useState([]);
 
     useEffect(() => {
         // 1. Fetch Session and Quiz info
@@ -31,6 +28,18 @@ export default function TeacherPresenter() {
                 const quizRes = await fetch(`http://localhost:3001/api/quizzes/${sessData.quiz_id}`);
                 const quizData = await quizRes.json();
                 setQuiz(quizData);
+
+                if (sessData.class_id) {
+                    try {
+                        const classRes = await fetch(`http://localhost:3001/api/classes/${sessData.class_id}/students`);
+                        if (classRes.ok) {
+                            const classData = await classRes.json();
+                            setClassStudents(classData);
+                        }
+                    } catch (e) {
+                        console.error('Error fetching class students', e);
+                    }
+                }
             } catch (err) {
                 console.error(err);
                 navigate('/teacher');
@@ -49,17 +58,30 @@ export default function TeacherPresenter() {
         newSocket.on('session_state', (state) => {
             setCurrentIdx(state.currentQuestionIndex || 0);
             setResults(state.results || {});
+            if (state.answeredStudents && state.answeredStudents[state.currentQuestionIndex]) {
+                setAnsweredStudents(new Set(state.answeredStudents[state.currentQuestionIndex].map(String)));
+            } else {
+                setAnsweredStudents(new Set());
+            }
         });
 
-        newSocket.on('participants_update', ({ count }) => {
+        newSocket.on('participants_update', ({ count, details }) => {
             setParticipants(count);
+            if (details) setParticipantDetails(details);
         });
 
-        newSocket.on('results_update', ({ questionId, results: qResults }) => {
+        newSocket.on('results_update', ({ questionId, results: qResults, answered }) => {
             setResults(prev => ({
                 ...prev,
                 [questionId]: qResults
             }));
+            if (answered) {
+                setAnsweredStudents(new Set(answered.map(String)));
+            }
+        });
+
+        newSocket.on('question_changed', ({ newIndex }) => {
+            setAnsweredStudents(new Set());
         });
 
         return () => newSocket.close();
@@ -104,27 +126,32 @@ export default function TeacherPresenter() {
 
     const qResults = results[currentQ.id] || {};
 
-    // Build Chart Data
-    const chartData = {
-        labels: currentQ.options.map(o => o.text),
-        datasets: [{
-            label: 'Responses',
-            data: currentQ.options.map(o => qResults[o.id] || 0),
-            backgroundColor: 'rgba(79, 70, 229, 0.8)', // var(--primary)
-            borderRadius: 8,
-        }]
-    };
+    const connectedStudentIds = Object.keys(participantDetails);
 
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 1 } }
-        },
-        plugins: {
-            legend: { display: false }
+    // Roster IDs
+    const rosterIds = classStudents.map(s => String(s.id));
+
+    const allExpectedIds = new Set([...rosterIds, ...connectedStudentIds]);
+
+    const studentsAnswered = [];
+    const studentsWaiting = [];
+    const studentsNotJoined = [];
+
+    allExpectedIds.forEach(id => {
+        let name = participantDetails[id];
+        if (!name) {
+            const studentInClass = classStudents.find(s => String(s.id) === id);
+            name = studentInClass ? studentInClass.username : `Student ${id}`;
         }
-    };
+
+        if (answeredStudents.has(id)) {
+            studentsAnswered.push({ id, name });
+        } else if (connectedStudentIds.includes(id)) {
+            studentsWaiting.push({ id, name });
+        } else {
+            studentsNotJoined.push({ id, name });
+        }
+    });
 
     return (
         <div className="fade-in" style={{ minHeight: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column' }}>
@@ -163,26 +190,84 @@ export default function TeacherPresenter() {
                         </div>
                     )}
 
+                    {currentQ.code_snippet && (
+                        <div style={{ width: '100%', maxWidth: '800px', marginBottom: '2rem', textAlign: 'left' }}>
+                            <pre style={{
+                                backgroundColor: '#1E293B',
+                                color: '#F8FAFC',
+                                padding: '1.5rem',
+                                borderRadius: 'var(--radius-md)',
+                                overflowX: 'auto',
+                                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                                fontSize: '1rem',
+                                lineHeight: '1.5',
+                                boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)'
+                            }}>
+                                <code className={currentQ.code_language ? `language-${currentQ.code_language}` : ''}>
+                                    {currentQ.code_snippet}
+                                </code>
+                            </pre>
+                        </div>
+                    )}
+
                     <h1 style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '3rem' }}>{currentQ.text}</h1>
 
-                    <div style={{ width: '80%', flex: 1, minHeight: 0 }}>
-                        {currentQ.type === 'short_answer' ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '600px', margin: '0 auto', overflowY: 'auto' }}>
-                                {currentQ.options.filter(opt => qResults[opt.id] > 0).map(opt => (
-                                    <div key={opt.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', backgroundColor: '#F9FAFB', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
-                                        <div style={{ fontSize: '1.25rem', fontWeight: 500, color: 'var(--text-main)' }}>"{opt.text}"</div>
-                                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)', backgroundColor: '#EEF2FF', padding: '0.25rem 1rem', borderRadius: 'var(--radius-FULL)' }}>
-                                            {qResults[opt.id]}
-                                        </div>
-                                    </div>
-                                ))}
-                                {currentQ.options.filter(opt => qResults[opt.id] > 0).length === 0 && (
-                                    <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '2rem' }}>Waiting for responses...</div>
+                    <div style={{ width: '100%', maxWidth: '1000px', flex: 1, minHeight: 0 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '1.5rem' }}>
+                            {/* Answered Column */}
+                            <div style={{ backgroundColor: '#F0FDF4', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #BBF7D0', height: 'fit-content' }}>
+                                <h3 style={{ color: '#166534', marginTop: 0, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <CheckCircle2 size={24} /> Answered ({studentsAnswered.length})
+                                </h3>
+                                {studentsAnswered.length === 0 ? (
+                                    <p style={{ color: '#15803D', fontStyle: 'italic', margin: 0 }}>Waiting for first answer...</p>
+                                ) : (
+                                    <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                        {studentsAnswered.map(student => (
+                                            <li key={student.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#166534', fontWeight: 600, fontSize: '1.1rem', backgroundColor: '#DCFCE7', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)' }}>
+                                                {student.name}
+                                            </li>
+                                        ))}
+                                    </ul>
                                 )}
                             </div>
-                        ) : (
-                            <Bar data={chartData} options={chartOptions} />
-                        )}
+
+                            {/* Waiting Column */}
+                            <div style={{ backgroundColor: '#FFFBEB', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #FDE68A', height: 'fit-content' }}>
+                                <h3 style={{ color: '#92400E', marginTop: 0, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Clock size={24} /> Waiting ({studentsWaiting.length})
+                                </h3>
+                                {studentsWaiting.length === 0 ? (
+                                    <p style={{ color: '#B45309', fontStyle: 'italic', margin: 0 }}>All connected students have answered!</p>
+                                ) : (
+                                    <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                        {studentsWaiting.map(student => (
+                                            <li key={student.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#92400E', fontWeight: 500, fontSize: '1.1rem', backgroundColor: '#FEF3C7', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)' }}>
+                                                {student.name}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+
+                            {/* Not Joined Column */}
+                            <div style={{ backgroundColor: '#F3F4F6', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #D1D5DB', height: 'fit-content' }}>
+                                <h3 style={{ color: '#374151', marginTop: 0, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <UserMinus size={24} /> Not Joined ({studentsNotJoined.length})
+                                </h3>
+                                {studentsNotJoined.length === 0 ? (
+                                    <p style={{ color: '#4B5563', fontStyle: 'italic', margin: 0 }}>All students have joined!</p>
+                                ) : (
+                                    <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                        {studentsNotJoined.map(student => (
+                                            <li key={student.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4B5563', fontWeight: 500, fontSize: '1.1rem', backgroundColor: '#E5E7EB', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)' }}>
+                                                {student.name}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

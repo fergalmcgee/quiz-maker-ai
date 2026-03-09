@@ -98,6 +98,8 @@ function initializeTables() {
       current_question_index INTEGER DEFAULT 0,
       is_archived INTEGER DEFAULT 0,
       class_id INTEGER,
+      time_limit INTEGER,
+      randomize_questions INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,
       FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL

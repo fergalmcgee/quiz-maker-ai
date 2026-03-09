@@ -100,11 +100,11 @@ app.get('/api/sessions/:id', async (req, res) => {
 
 // Create a new valid session in DB before joining via socket
 app.post('/api/sessions', async (req, res) => {
-    const { quiz_id, mode, name, class_id, time_limit } = req.body;
+    const { quiz_id, mode, name, class_id, time_limit, randomize_questions } = req.body;
     try {
         const result = await queryDb.run(
-            'INSERT INTO sessions (quiz_id, mode, status, name, class_id, time_limit) VALUES (?, ?, ?, ?, ?, ?)',
-            [quiz_id, mode, 'active', name, class_id || null, time_limit || null]
+            'INSERT INTO sessions (quiz_id, mode, status, name, class_id, time_limit, randomize_questions) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [quiz_id, mode, 'active', name, class_id || null, time_limit || null, randomize_questions ? 1 : 0]
         );
         res.json({ sessionId: result.id });
     } catch (error) {
@@ -346,30 +346,44 @@ io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
     // Join a quiz session
-    socket.on('join_session', async ({ sessionId, userId, role }) => {
+    socket.on('join_session', async ({ sessionId, userId, username, role }) => {
         socket.join(`session_${sessionId}`);
 
         // Initialize session state if not exists
         if (!activeSessions[sessionId]) {
             activeSessions[sessionId] = {
                 participants: new Set(),
+                participantDetails: {}, // userId -> username
                 currentQuestionIndex: 0,
-                results: {} // questionId -> optionId -> count
+                results: {}, // questionId -> optionId -> count
+                answeredStudents: {} // questionId -> Set of userIds
             };
         }
 
         if (role === 'student') {
             activeSessions[sessionId].participants.add(userId);
-            // Notify teacher of participant count change
+            if (username) {
+                activeSessions[sessionId].participantDetails[userId] = username;
+            }
+            // Notify teacher of participant count and newly updated details
             io.to(`session_${sessionId}`).emit('participants_update', {
-                count: activeSessions[sessionId].participants.size
+                count: activeSessions[sessionId].participants.size,
+                details: activeSessions[sessionId].participantDetails
             });
         }
 
         // Send current session state to the newly connected user
+        const answeredArrays = {};
+        if (activeSessions[sessionId].answeredStudents) {
+            for (const [qId, stuSet] of Object.entries(activeSessions[sessionId].answeredStudents)) {
+                answeredArrays[qId] = Array.from(stuSet);
+            }
+        }
+
         socket.emit('session_state', {
             currentQuestionIndex: activeSessions[sessionId].currentQuestionIndex,
-            results: activeSessions[sessionId].results
+            results: activeSessions[sessionId].results,
+            answeredStudents: answeredArrays
         });
     });
 
@@ -398,9 +412,15 @@ io.on('connection', (socket) => {
             }
             activeSessions[sessionId].results[questionId][optionId]++;
 
+            if (!activeSessions[sessionId].answeredStudents[questionId]) {
+                activeSessions[sessionId].answeredStudents[questionId] = new Set();
+            }
+            activeSessions[sessionId].answeredStudents[questionId].add(studentId);
+
             io.to(`session_${sessionId}`).emit('results_update', {
                 questionId,
-                results: activeSessions[sessionId].results[questionId]
+                results: activeSessions[sessionId].results[questionId],
+                answered: Array.from(activeSessions[sessionId].answeredStudents[questionId])
             });
         } catch (e) {
             console.error('Error recording answer:', e);
@@ -455,9 +475,15 @@ io.on('connection', (socket) => {
             }
             activeSessions[sessionId].results[questionId][targetOptionId]++;
 
+            if (!activeSessions[sessionId].answeredStudents[questionId]) {
+                activeSessions[sessionId].answeredStudents[questionId] = new Set();
+            }
+            activeSessions[sessionId].answeredStudents[questionId].add(studentId);
+
             io.to(`session_${sessionId}`).emit('results_update', {
                 questionId,
-                results: activeSessions[sessionId].results[questionId]
+                results: activeSessions[sessionId].results[questionId],
+                answered: Array.from(activeSessions[sessionId].answeredStudents[questionId])
             });
         } catch (e) {
             console.error('Error recording text answer:', e);

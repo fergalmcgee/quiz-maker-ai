@@ -257,6 +257,16 @@ router.put('/quizzes/:id/share', async (req, res) => {
     }
 });
 
+// Soft delete a quiz
+router.delete('/quizzes/:id', async (req, res) => {
+    try {
+        await queryDb.run('UPDATE quizzes SET is_active = 0 WHERE id = ?', [req.params.id]);
+        res.json({ message: 'Quiz deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Export Quiz to Bulk Format
 router.get('/quizzes/:id/export', async (req, res) => {
     try {
@@ -287,10 +297,58 @@ router.get('/quizzes/:id/export', async (req, res) => {
                     }
                 }
             }
+            if (q.code_snippet) {
+                bulkText += `[CODE: ${q.code_language || ''}]\n${q.code_snippet}\n[/CODE]\n`;
+            }
             bulkText += '\n'; // Add blank line between questions
         }
 
-        res.json({ bulkText: bulkText.trim() });
+        res.json({ bulkText: bulkText.trim(), questions: questionsRows });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Edit Quiz (Structured JSON Versioning)
+router.put('/quizzes/:id/structure', async (req, res) => {
+    const { title, description, questions } = req.body;
+    const oldQuizId = req.params.id;
+
+    try {
+        // Fetch old quiz to keep authorId and is_shared
+        const oldQuiz = await queryDb.get('SELECT * FROM quizzes WHERE id = ?', [oldQuizId]);
+        if (!oldQuiz) return res.status(404).json({ error: 'Quiz not found' });
+
+        // 1. Create New Quiz
+        const quizResult = await queryDb.run(
+            'INSERT INTO quizzes (title, description, author_id, is_shared, is_active) VALUES (?, ?, ?, ?, 1)',
+            [title, description, oldQuiz.author_id, oldQuiz.is_shared]
+        );
+        const newQuizId = quizResult.id;
+
+        let questionsImported = 0;
+
+        for (const q of questions) {
+            const questionResult = await queryDb.run(
+                'INSERT INTO questions (quiz_id, text, type, image_url, code_snippet, code_language) VALUES (?, ?, ?, ?, ?, ?)',
+                [newQuizId, q.text, q.type || 'multiple_choice', q.image_url || null, q.code_snippet || null, q.code_language || null]
+            );
+
+            if (q.options && q.options.length > 0) {
+                for (const opt of q.options) {
+                    await queryDb.run(
+                        'INSERT INTO options (question_id, text, is_correct) VALUES (?, ?, ?)',
+                        [questionResult.id, opt.text, opt.isCorrect ? 1 : 0]
+                    );
+                }
+            }
+            questionsImported++;
+        }
+
+        // 3. Mark Old Quiz as Inactive
+        await queryDb.run('UPDATE quizzes SET is_active = 0 WHERE id = ?', [oldQuizId]);
+
+        res.json({ message: `Quiz updated successfully.`, quizId: newQuizId, questionsImported });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -406,6 +464,44 @@ router.put('/quizzes/:id', async (req, res) => {
         await queryDb.run('UPDATE quizzes SET is_active = 0 WHERE id = ?', [oldQuizId]);
 
         res.json({ message: `Quiz updated successfully.`, quizId: newQuizId, questionsImported });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Create Quiz (Structured JSON)
+// JSON format expected:
+// { title, description, authorId, questions: [{ text, type, image_url, code_snippet, code_language, options: [{text, isCorrect}] }] }
+router.post('/quizzes/builder', async (req, res) => {
+    const { title, description, authorId, questions } = req.body;
+    try {
+        // 1. Create Quiz
+        const quizResult = await queryDb.run(
+            'INSERT INTO quizzes (title, description, author_id) VALUES (?, ?, ?)',
+            [title, description, authorId || null]
+        );
+        const quizId = quizResult.id;
+
+        let questionsImported = 0;
+
+        for (const q of questions) {
+            const questionResult = await queryDb.run(
+                'INSERT INTO questions (quiz_id, text, type, image_url, code_snippet, code_language) VALUES (?, ?, ?, ?, ?, ?)',
+                [quizId, q.text, q.type || 'multiple_choice', q.image_url || null, q.code_snippet || null, q.code_language || null]
+            );
+
+            if (q.options && q.options.length > 0) {
+                for (const opt of q.options) {
+                    await queryDb.run(
+                        'INSERT INTO options (question_id, text, is_correct) VALUES (?, ?, ?)',
+                        [questionResult.id, opt.text, opt.isCorrect ? 1 : 0]
+                    );
+                }
+            }
+            questionsImported++;
+        }
+
+        res.json({ message: `Quiz imported successfully with ${questionsImported} questions.`, quizId, questionsImported });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -569,8 +665,8 @@ router.post('/quizzes/:id/copy', async (req, res) => {
         const questions = await queryDb.all('SELECT * FROM questions WHERE quiz_id = ?', [sourceQuizId]);
         for (const q of questions) {
             const newQuestion = await queryDb.run(
-                'INSERT INTO questions (quiz_id, text, type) VALUES (?, ?, ?)',
-                [newQuizId, q.text, q.type]
+                'INSERT INTO questions (quiz_id, text, type, image_url, code_snippet, code_language) VALUES (?, ?, ?, ?, ?, ?)',
+                [newQuizId, q.text, q.type, q.image_url || null, q.code_snippet || null, q.code_language || null]
             );
 
             // 4. Get and copy all options for this question
