@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
 import TeacherDashboard from './pages/TeacherDashboard';
 import TeacherPresenter from './pages/TeacherPresenter';
@@ -13,6 +14,7 @@ function App() {
 
     return (
         <BrowserRouter>
+            <Toaster position="top-right" />
             <div className="app-container">
                 <header className="navbar fade-in">
                     <h1 className="logo">U-challenge</h1>

@@ -19,23 +19,8 @@ Before moving the files to the Windows Server, we need to build the React fronte
    ```
    *This command creates a `dist` folder inside `QuizMaker/client`. This folder contains the entire frontend ready for production.*
 
-## 2. Prepare the Server Code to Serve the Frontend
-We need to tell the Node.js server to serve those built frontend files.
-
-1. Open `/Users/fergal.mcgee/Documents/Projects/QuizMaker/server/server.js`
-2. Add the following code near the bottom of the file (just above `server.listen(PORT...)`):
-
-   ```javascript
-   // --- Production Frontend Serving ---
-   // Once built, serve the React static files
-   const clientDistPath = join(__dirname, '../client/dist');
-   app.use(express.static(clientDistPath));
-
-   // Catch-all to route any unknown requests back to React (for React Router)
-   app.get('*', (req, res) => {
-       res.sendFile(join(clientDistPath, 'index.html'));
-   });
-   ```
+## 2. Prepare the Server
+The server is already configured to automatically detect and serve the built frontend from the `client/dist` folder. No changes are needed to the code.
 
 ## 3. Transfer Files to Windows Server
 1. Copy the entire `QuizMaker` folder to your Windows Server. You can put it anywhere (e.g., `C:\Projects\QuizMaker`).

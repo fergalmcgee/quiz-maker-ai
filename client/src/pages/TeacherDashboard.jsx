@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, Users, LayoutDashboard, Play, Globe, Download, Archive, CheckCircle, Search, UserPlus, UserMinus, ChevronLeft, Trash2 } from 'lucide-react';
+import { PlusCircle, Users, LayoutDashboard, Play, Globe, Download, Archive, CheckCircle, Search, UserPlus, UserMinus, ChevronLeft, Trash2, Clock, History } from 'lucide-react';
+import toast from 'react-hot-toast';
+import TeacherGrowthView from '../components/TeacherGrowthView';
 
 export default function TeacherDashboard({ user }) {
     const navigate = useNavigate();
@@ -14,6 +16,8 @@ export default function TeacherDashboard({ user }) {
     const [sessionMode, setSessionMode] = useState('live');
     const [sessionTimer, setSessionTimer] = useState('');
     const [randomizeQuestions, setRandomizeQuestions] = useState(false);
+    const [shuffleOptions, setShuffleOptions] = useState(false);
+    const [isTeamMode, setIsTeamMode] = useState(false);
 
     const [showAllQuizzes, setShowAllQuizzes] = useState(false);
     const [showAllPastSessions, setShowAllPastSessions] = useState(false);
@@ -21,9 +25,13 @@ export default function TeacherDashboard({ user }) {
     // Visual Builder State
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [quizCategory, setQuizCategory] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('All');
+    const [communityCategory, setCommunityCategory] = useState('All');
     const [questions, setQuestions] = useState([]);
     const [saving, setSaving] = useState(false);
     const [editingQuizId, setEditingQuizId] = useState(null);
+    const [sessionClassFilter, setSessionClassFilter] = useState('All');
 
     // Bulk Import Modal
     const [showBulkImportModal, setShowBulkImportModal] = useState(false);
@@ -51,21 +59,33 @@ export default function TeacherDashboard({ user }) {
         }
     }, [user]);
 
-    const fetchQuizzes = async () => {
+    const fetchQuizzes = async (category = null) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/quizzes?authorId=${user.id}`);
-            const data = await res.json();
-            setQuizzes(data);
+            let url = `/api/quizzes?authorId=${user.id}`;
+            if (category && category !== 'All') {
+                url += `&category=${encodeURIComponent(category)}`;
+            }
+            const res = await fetch(url);
+            if (res.ok) {
+                const data = await res.json();
+                setQuizzes(Array.isArray(data) ? data : []);
+            }
         } catch (e) {
             console.error(e);
         }
     };
 
-    const fetchCommunityQuizzes = async () => {
+    const fetchCommunityQuizzes = async (category = null) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/quizzes/community/${user.id}`);
-            const data = await res.json();
-            setCommunityQuizzes(data);
+            let url = `/api/quizzes/community/${user.id}`;
+            if (category && category !== 'All') {
+                url += `?category=${encodeURIComponent(category)}`;
+            }
+            const res = await fetch(url);
+            if (res.ok) {
+                const data = await res.json();
+                setCommunityQuizzes(Array.isArray(data) ? data : []);
+            }
         } catch (e) {
             console.error(e);
         }
@@ -73,9 +93,11 @@ export default function TeacherDashboard({ user }) {
 
     const fetchSessions = async () => {
         try {
-            const res = await fetch(`http://localhost:3001/api/sessions/teacher/${user.id}`);
-            const data = await res.json();
-            setSessions(data);
+            const res = await fetch(`/api/sessions/teacher/${user.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setSessions(Array.isArray(data) ? data : []);
+            }
         } catch (e) {
             console.error(e);
         }
@@ -83,9 +105,11 @@ export default function TeacherDashboard({ user }) {
 
     const fetchClasses = async () => {
         try {
-            const res = await fetch(`http://localhost:3001/api/classes?teacherId=${user.id}`);
-            const data = await res.json();
-            setClasses(data);
+            const res = await fetch(`/api/classes?teacherId=${user.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setClasses(Array.isArray(data) ? data : []);
+            }
         } catch (e) {
             console.error(e);
         }
@@ -94,7 +118,7 @@ export default function TeacherDashboard({ user }) {
     const handleCreateClass = async (e) => {
         e.preventDefault();
         try {
-            const res = await fetch('http://localhost:3001/api/classes', {
+            const res = await fetch('/api/classes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newClassName, teacherId: user.id })
@@ -110,7 +134,7 @@ export default function TeacherDashboard({ user }) {
 
     const fetchClassStudents = async (classId) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/classes/${classId}/students`);
+            const res = await fetch(`/api/classes/${classId}/students`);
             const data = await res.json();
             setClassStudents(data);
         } catch (e) {
@@ -133,7 +157,7 @@ export default function TeacherDashboard({ user }) {
                 return;
             }
             try {
-                const res = await fetch(`http://localhost:3001/api/students/search?q=${encodeURIComponent(studentSearchQuery)}`);
+                const res = await fetch(`/api/students/search?q=${encodeURIComponent(studentSearchQuery)}`);
                 const data = await res.json();
                 setStudentSearchResults(data);
             } catch (e) {
@@ -151,7 +175,7 @@ export default function TeacherDashboard({ user }) {
     const handleAddStudentToClass = async (studentId) => {
         if (!selectedClassRaw) return;
         try {
-            const res = await fetch(`http://localhost:3001/api/classes/${selectedClassRaw.id}/students`, {
+            const res = await fetch(`/api/classes/${selectedClassRaw.id}/students`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ studentId })
@@ -171,7 +195,7 @@ export default function TeacherDashboard({ user }) {
     const handleRemoveStudentFromClass = async (studentId) => {
         if (!selectedClassRaw) return;
         try {
-            await fetch(`http://localhost:3001/api/classes/${selectedClassRaw.id}/students/${studentId}`, {
+            await fetch(`/api/classes/${selectedClassRaw.id}/students/${studentId}`, {
                 method: 'DELETE'
             });
             fetchClassStudents(selectedClassRaw.id);
@@ -183,58 +207,66 @@ export default function TeacherDashboard({ user }) {
 
     const handleEditClick = async (quiz) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/quizzes/${quiz.id}`);
+            const res = await fetch(`/api/quizzes/${quiz.id}`);
             if (res.ok) {
                 const data = await res.json();
                 setTitle(quiz.title);
                 setDescription(quiz.description || '');
+                setQuizCategory(quiz.category || '');
                 setQuestions(data.questions || []);
                 setEditingQuizId(quiz.id);
                 setActiveTab('import');
             } else {
-                alert('Failed to load quiz metadata.');
+                toast.error('Failed to load quiz metadata.');
             }
         } catch (e) {
             console.error(e);
-            alert('Failed to load quiz metadata.');
+            toast.error('Failed to load quiz metadata.');
         }
     };
 
     const handleSaveQuiz = async (e) => {
         e.preventDefault();
-        if (!title.trim()) { alert("Please provide a title"); return; }
-        if (questions.length === 0) { alert("Please add at least one question."); return; }
+        if (!title.trim()) { toast.error("Please provide a title"); return; }
+        if (questions.length === 0) { toast.error("Please add at least one question."); return; }
 
         const validQuestions = questions.filter(q => q.text.trim() || q.image_url);
-        if (validQuestions.length === 0) { alert("Questions must have text or an image."); return; }
+        if (validQuestions.length === 0) { toast.error("Questions must have text or an image."); return; }
 
         setSaving(true);
         try {
-            const endpoint = editingQuizId ? `http://localhost:3001/api/quizzes/${editingQuizId}/structure` : 'http://localhost:3001/api/quizzes/builder';
+            const endpoint = editingQuizId ? `/api/quizzes/${editingQuizId}/structure` : '/api/quizzes/builder';
             const method = editingQuizId ? 'PUT' : 'POST';
 
             const res = await fetch(endpoint, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, description, questions: validQuestions, authorId: user.id })
+                body: JSON.stringify({
+                    title,
+                    description,
+                    category: quizCategory || 'General',
+                    questions: validQuestions,
+                    authorId: user.id
+                })
             });
 
             if (res.ok) {
                 setTitle('');
                 setDescription('');
+                setQuizCategory('');
                 setQuestions([]);
                 setEditingQuizId(null);
-                fetchQuizzes();
+                fetchQuizzes(selectedCategory);
                 fetchCommunityQuizzes();
-                alert(`Success: Quiz ${editingQuizId ? 'Updated' : 'Created'}!`);
+                toast.success(`Quiz ${editingQuizId ? 'Updated' : 'Created'}!`);
                 setActiveTab('quizzes');
             } else {
                 const data = await res.json();
-                alert(`Error: ${data.error}`);
+                toast.error(`Error: ${data.error}`);
             }
         } catch (e) {
             console.error(e);
-            alert('Network error');
+            toast.error('Network error');
         } finally {
             setSaving(false);
         }
@@ -250,7 +282,7 @@ export default function TeacherDashboard({ user }) {
 
     const handleBulkImportProcess = () => {
         if (!bulkImportText.trim()) {
-            alert("Please paste some text to import.");
+            toast.error("Please paste some text to import.");
             return;
         }
 
@@ -328,9 +360,9 @@ export default function TeacherDashboard({ user }) {
             setQuestions(validQuestions);
             setBulkImportText('');
             setShowBulkImportModal(false);
-            alert(`Successfully imported ${validQuestions.length - questions.length} questions into the builder!`);
+            toast.success(`Successfully imported ${validQuestions.length - questions.length} questions into the builder!`);
         } else {
-            alert('No valid questions could be parsed from the text.');
+            toast.error('No valid questions could be parsed from the text.');
         }
     };
 
@@ -403,16 +435,18 @@ export default function TeacherDashboard({ user }) {
         setSessionMode('live'); // Default to live
         setSessionTimer(''); // Reset timer
         setRandomizeQuestions(false);
+        setShuffleOptions(false); // Reset options shuffle
+        setIsTeamMode(false);     // Reset team mode
     };
 
     const confirmStartSession = async (quizId) => {
         if (!sessionName.trim()) return;
         if (!targetClassId) {
-            alert('Please select a target class for this session.');
+            toast.error('Please select a target class for this session.');
             return;
         }
         try {
-            const res = await fetch('http://localhost:3001/api/sessions', {
+            const res = await fetch('/api/sessions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -421,22 +455,27 @@ export default function TeacherDashboard({ user }) {
                     name: sessionName,
                     class_id: targetClassId,
                     time_limit: sessionTimer ? parseInt(sessionTimer) : null,
-                    randomize_questions: randomizeQuestions
+                    randomize_questions: randomizeQuestions,
+                    shuffle_options: shuffleOptions,
+                    is_team_mode: isTeamMode
                 })
             });
             const data = await res.json();
-            if (data.sessionId) {
+            if (res.ok && data.sessionId) {
                 fetchSessions();
                 navigate(`/teacher/present/${data.sessionId}`);
+            } else {
+                toast.error(`Error starting session: ${data.error || 'Unknown error'}`);
             }
         } catch (e) {
             console.error(e);
+            toast.error('Network error while starting session.');
         }
     };
 
     const toggleShare = async (quizId, currentStatus) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/quizzes/${quizId}/share`, {
+            const res = await fetch(`/api/quizzes/${quizId}/share`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ isShared: !currentStatus })
@@ -452,7 +491,7 @@ export default function TeacherDashboard({ user }) {
 
     const copyCommunityQuiz = async (quizId) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/quizzes/${quizId}/copy`, {
+            const res = await fetch(`/api/quizzes/${quizId}/copy`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ newAuthorId: user.id })
@@ -468,7 +507,7 @@ export default function TeacherDashboard({ user }) {
 
     const archiveSession = async (sessionId) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/sessions/${sessionId}/archive`, { method: 'PUT' });
+            const res = await fetch(`/api/sessions/${sessionId}/archive`, { method: 'PUT' });
             if (res.ok) fetchSessions();
         } catch (e) {
             console.error(e);
@@ -477,22 +516,39 @@ export default function TeacherDashboard({ user }) {
 
     const handleDeleteQuiz = async (quizId) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/quizzes/${quizId}`, { method: 'DELETE' });
+            const res = await fetch(`/api/quizzes/${quizId}`, { method: 'DELETE' });
             if (res.ok) {
                 fetchQuizzes();
                 fetchCommunityQuizzes();
                 setConfirmDeleteId(null);
+                toast.success('Quiz deleted.');
             } else {
-                alert('Failed to delete quiz.');
+                toast.error('Failed to delete quiz.');
             }
         } catch (e) {
             console.error(e);
-            alert('Network error while deleting quiz.');
+            toast.error('Network error while deleting quiz.');
         }
+    };
+
+    const groupSessionsByClass = (sessionList) => {
+        const filtered = sessionClassFilter === 'All' 
+            ? sessionList 
+            : sessionList.filter(s => (s.class_name || 'No Class Assigned') === sessionClassFilter);
+
+        return filtered.reduce((groups, session) => {
+            const className = session.class_name || 'No Class Assigned';
+            if (!groups[className]) groups[className] = [];
+            groups[className].push(session);
+            return groups;
+        }, {});
     };
 
     const activeSessions = sessions.filter(s => s.status === 'active' && s.is_archived === 0);
     const completedSessions = sessions.filter(s => s.status === 'completed' || s.is_archived === 1);
+
+    const activeGroups = groupSessionsByClass(activeSessions);
+    const pastGroups = groupSessionsByClass(completedSessions);
 
     const displayedQuizzes = showAllQuizzes ? quizzes : quizzes.slice(0, 5);
     const displayedPastSessions = showAllPastSessions ? completedSessions : completedSessions.slice(0, 5);
@@ -527,6 +583,11 @@ export default function TeacherDashboard({ user }) {
                             <Users size={20} /> Manage Classes
                         </button>
                     </li>
+                    <li>
+                        <button onClick={() => setActiveTab('growth')} className={activeTab === 'growth' ? 'active-tab' : ''} style={tabStyle(activeTab === 'growth')}>
+                            <LayoutDashboard size={20} /> Class Growth
+                        </button>
+                    </li>
                 </ul>
             </aside>
 
@@ -536,8 +597,29 @@ export default function TeacherDashboard({ user }) {
                 {activeTab === 'quizzes' && (
                     <div className="fade-in">
                         <h2>My Quizzes</h2>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                            {['All', ...new Set(quizzes.map(q => q.category).filter(Boolean))].map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => { setSelectedCategory(cat); fetchQuizzes(cat); }}
+                                    style={{
+                                        padding: '0.4rem 1rem',
+                                        borderRadius: '2rem',
+                                        border: `1px solid ${selectedCategory === cat ? 'var(--primary)' : 'var(--border)'}`,
+                                        backgroundColor: selectedCategory === cat ? 'var(--primary)' : 'white',
+                                        color: selectedCategory === cat ? 'white' : 'var(--text-main)',
+                                        whiteSpace: 'nowrap',
+                                        cursor: 'pointer',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
                         {quizzes.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)', marginTop: '1rem' }}>No quizzes found. Create one.</p>
+                            <p style={{ color: 'var(--text-muted)', marginTop: '1rem' }}>No quizzes found in this category.</p>
                         ) : (
                             <div>
                                 <div style={{ display: 'grid', gap: '1rem', marginTop: '1.5rem' }}>
@@ -547,6 +629,7 @@ export default function TeacherDashboard({ user }) {
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                     <h3 style={{ margin: 0 }}>{q.title}</h3>
                                                     {q.is_shared === 1 && <span style={{ padding: '0.15rem 0.4rem', backgroundColor: '#DBEAFE', color: '#1D4ED8', fontSize: '0.7rem', borderRadius: '1rem', fontWeight: 600 }}>Shared</span>}
+                                                    <span style={{ padding: '0.15rem 0.4rem', backgroundColor: '#F3F4F6', color: '#4B5563', fontSize: '0.7rem', borderRadius: '1rem', fontWeight: 600 }}>{q.category || 'General'}</span>
                                                 </div>
                                                 <p style={{ color: 'var(--text-muted)', margin: '0.5rem 0 0 0' }}>{q.description}</p>
                                             </div>
@@ -583,21 +666,78 @@ export default function TeacherDashboard({ user }) {
                                                                 ))}
                                                             </select>
                                                         </div>
-                                                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                                            <label style={{ fontWeight: 600, fontSize: '0.9rem' }}>Mode:</label>
-                                                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.9rem', cursor: 'pointer' }}>
-                                                                <input type="radio" value="live" checked={sessionMode === 'live'} onChange={(e) => setSessionMode(e.target.value)} />
-                                                                Live (Teacher-Paced)
-                                                            </label>
-                                                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.9rem', cursor: 'pointer' }}>
-                                                                <input type="radio" value="async" checked={sessionMode === 'async'} onChange={(e) => setSessionMode(e.target.value)} />
-                                                                Async (Student-Paced)
-                                                            </label>
+                                                        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                                                            <div
+                                                                onClick={() => setSessionMode('live')}
+                                                                style={{
+                                                                    flex: 1,
+                                                                    padding: '1rem',
+                                                                    borderRadius: 'var(--radius-md)',
+                                                                    border: `2px solid ${sessionMode === 'live' ? 'var(--primary)' : 'var(--border)'}`,
+                                                                    backgroundColor: sessionMode === 'live' ? '#EEF2FF' : 'white',
+                                                                    cursor: 'pointer',
+                                                                    transition: 'all 0.2s',
+                                                                    display: 'flex',
+                                                                    flexDirection: 'column',
+                                                                    gap: '0.5rem',
+                                                                    alignItems: 'center',
+                                                                    textAlign: 'center'
+                                                                }}
+                                                            >
+                                                                <Play size={24} color={sessionMode === 'live' ? 'var(--primary)' : 'var(--text-muted)'} />
+                                                                <div>
+                                                                    <div style={{ fontWeight: 700, fontSize: '1rem', color: sessionMode === 'live' ? 'var(--primary)' : 'var(--text-main)' }}>Live Session</div>
+                                                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Teacher-paced classroom experience</div>
+                                                                </div>
+                                                            </div>
+                                                            <div
+                                                                onClick={() => setSessionMode('async')}
+                                                                style={{
+                                                                    flex: 1,
+                                                                    padding: '1rem',
+                                                                    borderRadius: 'var(--radius-md)',
+                                                                    border: `2px solid ${sessionMode === 'async' ? 'var(--primary)' : 'var(--border)'}`,
+                                                                    backgroundColor: sessionMode === 'async' ? '#EEF2FF' : 'white',
+                                                                    cursor: 'pointer',
+                                                                    transition: 'all 0.2s',
+                                                                    display: 'flex',
+                                                                    flexDirection: 'column',
+                                                                    gap: '0.5rem',
+                                                                    alignItems: 'center',
+                                                                    textAlign: 'center'
+                                                                }}
+                                                            >
+                                                                <Clock size={24} color={sessionMode === 'async' ? 'var(--primary)' : 'var(--text-muted)'} />
+                                                                <div>
+                                                                    <div style={{ fontWeight: 700, fontSize: '1rem', color: sessionMode === 'async' ? 'var(--primary)' : 'var(--text-main)' }}>Async Session</div>
+                                                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Student-paced homework or review</div>
+                                                                </div>
+                                                            </div>
                                                         </div>
 
+                                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
+                                                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={shuffleOptions}
+                                                                    onChange={(e) => setShuffleOptions(e.target.checked)}
+                                                                />
+                                                                Shuffle Options
+                                                            </label>
+                                                        </div>
+                                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
+                                                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--primary)', fontWeight: 600 }}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={isTeamMode}
+                                                                    onChange={(e) => setIsTeamMode(e.target.checked)}
+                                                                />
+                                                                Enable Team Mode
+                                                            </label>
+                                                        </div>
                                                         {sessionMode === 'async' && (
                                                             <>
-                                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
                                                                     <label style={{ fontWeight: 600, fontSize: '0.9rem' }}>Time Limit (mins):</label>
                                                                     <input
                                                                         type="number"
@@ -651,16 +791,41 @@ export default function TeacherDashboard({ user }) {
                 {activeTab === 'community' && (
                     <div className="fade-in">
                         <h2>Discover Community Quizzes</h2>
-                        <p style={{ color: 'var(--text-muted)', margin: '0.5rem 0 1.5rem 0' }}>Explore quizzes created by other teachers that you can import and use.</p>
+                        <p style={{ color: 'var(--text-muted)', margin: '0.5rem 0 1rem 0' }}>Explore quizzes created by other teachers that you can import and use.</p>
+
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                            {['All', ...new Set(communityQuizzes.map(q => q.category).filter(Boolean))].map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => { setCommunityCategory(cat); fetchCommunityQuizzes(cat); }}
+                                    style={{
+                                        padding: '0.4rem 1rem',
+                                        borderRadius: '2rem',
+                                        border: `1px solid ${communityCategory === cat ? 'var(--primary)' : 'var(--border)'}`,
+                                        backgroundColor: communityCategory === cat ? 'var(--primary)' : 'white',
+                                        color: communityCategory === cat ? 'white' : 'var(--text-main)',
+                                        whiteSpace: 'nowrap',
+                                        cursor: 'pointer',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
 
                         {communityQuizzes.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)' }}>No community quizzes available yet.</p>
+                            <p style={{ color: 'var(--text-muted)' }}>No community quizzes found in this category.</p>
                         ) : (
                             <div style={{ display: 'grid', gap: '1rem' }}>
                                 {communityQuizzes.map(q => (
                                     <div key={q.id} style={{ padding: '1.5rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'white' }}>
                                         <div>
-                                            <h3 style={{ margin: 0, color: 'var(--text-main)' }}>{q.title}</h3>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <h3 style={{ margin: 0, color: 'var(--text-main)' }}>{q.title}</h3>
+                                                <span style={{ padding: '0.15rem 0.4rem', backgroundColor: '#F3F4F6', color: '#4B5563', fontSize: '0.7rem', borderRadius: '1rem', fontWeight: 600 }}>{q.category || 'General'}</span>
+                                            </div>
                                             <p style={{ color: 'var(--text-muted)', margin: '0.25rem 0 0.5rem 0', fontSize: '0.9rem' }}>Created by: <strong>{q.author_name || 'System'}</strong></p>
                                             <p style={{ color: 'var(--text-main)', margin: 0 }}>{q.description}</p>
                                         </div>
@@ -683,12 +848,19 @@ export default function TeacherDashboard({ user }) {
                             )}
                         </div>
                         <form onSubmit={handleSaveQuiz} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                <div style={{ flex: 1 }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                                <div>
                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Quiz Title</label>
                                     <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="E.g., Intro to Algebra" style={inputStyle} required />
                                 </div>
-                                <div style={{ flex: 2 }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Category / Folder</label>
+                                    <input type="text" value={quizCategory} onChange={e => setQuizCategory(e.target.value)} placeholder="E.g., Algebra, Year 7" style={inputStyle} list="category-suggestions" />
+                                    <datalist id="category-suggestions">
+                                        {[...new Set(quizzes.map(q => q.category).filter(Boolean))].map(cat => <option key={cat} value={cat} />)}
+                                    </datalist>
+                                </div>
+                                <div>
                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Description</label>
                                     <input type="text" value={description} onChange={e => setDescription(e.target.value)} placeholder="What is this quiz about?" style={inputStyle} />
                                 </div>
@@ -717,19 +889,18 @@ export default function TeacherDashboard({ user }) {
                                                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>Image URL (Optional)</label>
                                                 <input type="text" value={q.image_url} onChange={e => updateQuestion(q.id, 'image_url', e.target.value)} placeholder="https://example.com/image.jpg" style={inputStyle} />
                                             </div>
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                                                 <div>
                                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>Code Snippet (Optional)</label>
-                                                    <textarea value={q.code_snippet} onChange={e => updateQuestion(q.id, 'code_snippet', e.target.value)} placeholder="def hello_world():
-    print('Hello')" style={{ ...inputStyle, minHeight: '100px', fontFamily: 'monospace' }} onKeyDown={e => {
-                                                            if (e.key === 'Tab') {
-                                                                e.preventDefault();
-                                                                const start = e.target.selectionStart;
-                                                                const end = e.target.selectionEnd;
-                                                                const value = e.target.value;
-                                                                updateQuestion(q.id, 'code_snippet', value.substring(0, start) + "    " + value.substring(end));
-                                                            }
-                                                        }} />
+                                                    <textarea value={q.code_snippet} onChange={e => updateQuestion(q.id, 'code_snippet', e.target.value)} placeholder="def hello_world():&#10;    print('Hello')" style={{ ...inputStyle, minHeight: '100px', fontFamily: 'monospace' }} onKeyDown={e => {
+                                                        if (e.key === 'Tab') {
+                                                            e.preventDefault();
+                                                            const start = e.target.selectionStart;
+                                                            const end = e.target.selectionEnd;
+                                                            const value = e.target.value;
+                                                            updateQuestion(q.id, 'code_snippet', value.substring(0, start) + "    " + value.substring(end));
+                                                        }
+                                                    }} />
                                                 </div>
                                                 <div>
                                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>Code Language</label>
@@ -741,6 +912,10 @@ export default function TeacherDashboard({ user }) {
                                                         <option value="html">HTML/CSS</option>
                                                     </select>
                                                 </div>
+                                            </div>
+                                            <div>
+                                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>Answer Explanation (Optional)</label>
+                                                <textarea value={q.explanation || ''} onChange={e => updateQuestion(q.id, 'explanation', e.target.value)} placeholder="Explain why the correct answer is correct. This is shown to students after the quiz." style={{ ...inputStyle, minHeight: '60px' }} />
                                             </div>
 
                                             <div>
@@ -788,33 +963,67 @@ export default function TeacherDashboard({ user }) {
                         <h2>Live Sessions Management</h2>
                         <p style={{ color: 'var(--text-muted)', margin: '0.5rem 0 1.5rem 0' }}>Monitor active sessions and review past results.</p>
 
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                            {['All', 'No Class Assigned', ...classes.map(c => c.name)].map(clsName => (
+                                <button
+                                    key={clsName}
+                                    onClick={() => setSessionClassFilter(clsName)}
+                                    style={{
+                                        padding: '0.4rem 1rem',
+                                        borderRadius: '2rem',
+                                        border: `1px solid ${sessionClassFilter === clsName ? 'var(--primary)' : 'var(--border)'}`,
+                                        backgroundColor: sessionClassFilter === clsName ? 'var(--primary)' : 'white',
+                                        color: sessionClassFilter === clsName ? 'white' : 'var(--text-main)',
+                                        whiteSpace: 'nowrap',
+                                        cursor: 'pointer',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    {clsName}
+                                </button>
+                            ))}
+                        </div>
+
                         <div style={{ marginBottom: '2.5rem' }}>
                             <h3 style={{ borderBottom: '2px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>Active Sessions</h3>
                             {activeSessions.length === 0 ? (
                                 <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>No active live sessions.</p>
                             ) : (
-                                <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
-                                    {activeSessions.map(s => (
-                                        <div key={s.id} style={{ padding: '1.5rem', border: '1px solid var(--primary)', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#EFF6FF' }}>
-                                            <div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                                                    <h3 style={{ margin: 0, color: 'var(--primary)' }}>{s.name || s.quiz_title}</h3>
-                                                    <span style={{
-                                                        padding: '0.25rem 0.5rem', borderRadius: '1rem', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase',
-                                                        backgroundColor: '#DBEAFE', color: '#1E40AF'
-                                                    }}>
-                                                        Live Now
-                                                    </span>
-                                                </div>
-                                                <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>Started: {new Date(s.created_at).toLocaleString()}</p>
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                <button onClick={() => navigate(`/teacher/present/${s.id}`)} style={{ backgroundColor: 'var(--primary)', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                                    <LayoutDashboard size={18} /> Presentation View
-                                                </button>
-                                                <button onClick={() => archiveSession(s.id)} style={{ backgroundColor: 'transparent', color: '#6B7280', border: '1px solid #D1D5DB', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, display: 'flex', gap: '0.5rem', alignItems: 'center' }} title="End Session and Move to Archives">
-                                                    <Archive size={18} />
-                                                </button>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '1rem' }}>
+                                    {Object.entries(activeGroups).map(([className, classSessions]) => (
+                                        <div key={className}>
+                                            <h4 style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', borderLeft: '3px solid var(--primary)', paddingLeft: '0.75rem' }}>
+                                                {className}
+                                            </h4>
+                                            <div style={{ display: 'grid', gap: '1rem' }}>
+                                                {classSessions.map(s => (
+                                                    <div key={s.id} style={{ padding: '1.5rem', border: '1px solid var(--primary)', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#EFF6FF' }}>
+                                                        <div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                                                                <h3 style={{ margin: 0, color: 'var(--primary)' }}>{s.name || s.quiz_title}</h3>
+                                                                <span style={{
+                                                                    padding: '0.25rem 0.5rem', borderRadius: '1rem', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase',
+                                                                    backgroundColor: '#DBEAFE', color: '#1E40AF'
+                                                                }}>
+                                                                    Live Now
+                                                                </span>
+                                                            </div>
+                                                            <p style={{ color: 'var(--text-main)', margin: '0.25rem 0', fontSize: '1rem', fontWeight: 600 }}>
+                                                                Join Code: <span style={{ fontFamily: 'monospace', fontSize: '1.2rem', padding: '0.2rem 0.4rem', backgroundColor: '#E5E7EB', borderRadius: '4px' }}>{s.join_code}</span>
+                                                            </p>
+                                                            <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>Started: {new Date(s.created_at).toLocaleString()}</p>
+                                                        </div>
+                                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                            <button onClick={() => navigate(`/teacher/present/${s.id}`)} style={{ backgroundColor: 'var(--primary)', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                                                <LayoutDashboard size={18} /> Presentation View
+                                                            </button>
+                                                            <button onClick={() => archiveSession(s.id)} style={{ backgroundColor: 'transparent', color: '#6B7280', border: '1px solid #D1D5DB', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, display: 'flex', gap: '0.5rem', alignItems: 'center' }} title="End Session and Move to Archives">
+                                                                <Archive size={18} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     ))}
@@ -828,25 +1037,34 @@ export default function TeacherDashboard({ user }) {
                                 <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>No past sessions found.</p>
                             ) : (
                                 <div>
-                                    <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
-                                        {displayedPastSessions.map(s => (
-                                            <div key={s.id} style={{ padding: '1.5rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--surface)' }}>
-                                                <div>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                                                        <h3 style={{ margin: 0, color: 'var(--text-main)' }}>{s.name || s.quiz_title}</h3>
-                                                        <span style={{
-                                                            padding: '0.25rem 0.5rem', borderRadius: '1rem', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase',
-                                                            backgroundColor: '#F3F4F6', color: '#4B5563'
-                                                        }}>
-                                                            Archived
-                                                        </span>
-                                                    </div>
-                                                    <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>Created: {new Date(s.created_at).toLocaleString()}</p>
-                                                </div>
-                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                    <button onClick={() => navigate(`/teacher/review/${s.id}`)} style={{ backgroundColor: 'transparent', color: 'var(--secondary)', border: '1px solid var(--secondary)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                                        <CheckCircle size={16} /> View Results
-                                                    </button>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '1rem' }}>
+                                        {Object.entries(pastGroups).map(([className, classSessions]) => (
+                                            <div key={className}>
+                                                <h4 style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', borderLeft: '3px solid var(--secondary)', paddingLeft: '0.75rem' }}>
+                                                    {className}
+                                                </h4>
+                                                <div style={{ display: 'grid', gap: '1rem' }}>
+                                                    {(showAllPastSessions ? classSessions : classSessions.slice(0, 5)).map(s => (
+                                                        <div key={s.id} style={{ padding: '1.5rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--surface)' }}>
+                                                            <div>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                                                                    <h3 style={{ margin: 0, color: 'var(--text-main)' }}>{s.name || s.quiz_title}</h3>
+                                                                    <span style={{
+                                                                        padding: '0.25rem 0.5rem', borderRadius: '1rem', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase',
+                                                                        backgroundColor: '#F3F4F6', color: '#4B5563'
+                                                                    }}>
+                                                                        Archived
+                                                                    </span>
+                                                                </div>
+                                                                <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>Created: {new Date(s.created_at).toLocaleString()}</p>
+                                                            </div>
+                                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                                <button onClick={() => navigate(`/teacher/review/${s.id}`)} style={{ backgroundColor: 'transparent', color: 'var(--secondary)', border: '1px solid var(--secondary)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                                                    <CheckCircle size={16} /> View Results
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
                                         ))}
@@ -854,7 +1072,7 @@ export default function TeacherDashboard({ user }) {
                                     {completedSessions.length > 5 && (
                                         <button
                                             onClick={() => setShowAllPastSessions(!showAllPastSessions)}
-                                            style={{ marginTop: '1rem', width: '100%', padding: '0.75rem', backgroundColor: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                                            style={{ marginTop: '1.5rem', width: '100%', padding: '0.75rem', backgroundColor: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                                         >
                                             {showAllPastSessions ? 'Collapse List ▲' : `Show All Past Sessions (${completedSessions.length}) ▼`}
                                         </button>
@@ -906,11 +1124,31 @@ export default function TeacherDashboard({ user }) {
                                 <button onClick={() => setSelectedClassRaw(null)} style={{ background: 'transparent', border: 'none', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: 0, marginBottom: '1.5rem', fontWeight: 600 }}>
                                     <ChevronLeft size={16} /> Back to Classes
                                 </button>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                                     <div>
                                         <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>{selectedClassRaw.name}</h2>
                                         <p style={{ color: 'var(--text-muted)', margin: '0.25rem 0 0 0' }}>Managed Roster</p>
                                     </div>
+                                    <button 
+                                        onClick={() => {
+                                            setSessionClassFilter(selectedClassRaw.name);
+                                            setActiveTab('sessions');
+                                        }}
+                                        style={{ 
+                                            backgroundColor: 'transparent', 
+                                            color: 'var(--secondary)', 
+                                            border: '1px solid var(--secondary)', 
+                                            padding: '0.5rem 1rem', 
+                                            borderRadius: 'var(--radius-md)', 
+                                            cursor: 'pointer', 
+                                            fontWeight: 600,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem'
+                                        }}
+                                    >
+                                        <History size={18} /> View Session History
+                                    </button>
                                 </div>
 
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
@@ -958,7 +1196,12 @@ export default function TeacherDashboard({ user }) {
                                                     <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                                                         {studentSearchResults.map(student => (
                                                             <li key={student.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)', backgroundColor: 'white' }}>
-                                                                <span style={{ fontWeight: 500 }}>{student.username}</span>
+                                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                    <span style={{ fontWeight: 600 }}>{student.username}</span>
+                                                                    {student.form_class && (
+                                                                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Class: {student.form_class}</span>
+                                                                    )}
+                                                                </div>
                                                                 <button onClick={() => handleAddStudentToClass(student.id)} style={{ backgroundColor: '#F0FDF4', color: '#15803D', border: '1px solid #BBF7D0', padding: '0.25rem 0.5rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem', fontWeight: 600 }}>
                                                                     <UserPlus size={14} /> Add
                                                                 </button>
@@ -975,6 +1218,12 @@ export default function TeacherDashboard({ user }) {
                                 </div>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {activeTab === 'growth' && (
+                    <div className="fade-in">
+                        <TeacherGrowthView user={user} classes={classes} />
                     </div>
                 )}
 

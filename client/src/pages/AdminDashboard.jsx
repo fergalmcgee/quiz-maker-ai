@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, CheckCircle, UserX, KeyRound, UserPlus, FileText } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function AdminDashboard({ user }) {
     const [users, setUsers] = useState([]);
@@ -27,7 +28,7 @@ export default function AdminDashboard({ user }) {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const res = await fetch('http://localhost:3001/api/admin/users');
+            const res = await fetch('/api/admin/users');
             if (!res.ok) throw new Error('Failed to fetch users');
             const data = await res.json();
             setUsers(data);
@@ -40,26 +41,28 @@ export default function AdminDashboard({ user }) {
 
     const handleApprove = async (id) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/admin/users/${id}/approve`, {
+            const res = await fetch(`/api/admin/users/${id}/approve`, {
                 method: 'PUT'
             });
             if (!res.ok) throw new Error('Failed to approve user');
             fetchUsers();
+            toast.success('User approved.');
         } catch (err) {
-            alert(err.message);
+            toast.error(err.message);
         }
     };
 
     const handleDelete = async (id) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/admin/users/${id}`, {
+            const res = await fetch(`/api/admin/users/${id}`, {
                 method: 'DELETE'
             });
             if (!res.ok) throw new Error('Failed to delete user');
             fetchUsers();
             setConfirmAction(null);
+            toast.success('User deleted.');
         } catch (err) {
-            alert(err.message);
+            toast.error(err.message);
         }
     };
 
@@ -67,7 +70,7 @@ export default function AdminDashboard({ user }) {
         if (!newPasswordValue) return;
 
         try {
-            const res = await fetch(`http://localhost:3001/api/admin/users/${id}/password`, {
+            const res = await fetch(`/api/admin/users/${id}/password`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ newPassword: newPasswordValue })
@@ -75,15 +78,16 @@ export default function AdminDashboard({ user }) {
             if (!res.ok) throw new Error('Failed to reset password');
             setConfirmAction(null);
             setNewPasswordValue('');
+            toast.success('Password reset successfully.');
         } catch (err) {
-            alert(err.message);
+            toast.error(err.message);
         }
     };
 
     const handleAddUser = async (e) => {
         e.preventDefault();
         try {
-            const res = await fetch('http://localhost:3001/api/users', {
+            const res = await fetch('/api/users', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -101,9 +105,10 @@ export default function AdminDashboard({ user }) {
                 setNewUserRole('student');
                 fetchUsers();
                 setActiveTab('users');
+                toast.success('User created.');
             } else {
                 const errData = await res.json();
-                alert(`Error: ${errData.error}`);
+                toast.error(`Error: ${errData.error}`);
             }
         } catch (e) {
             console.error(e);
@@ -114,7 +119,7 @@ export default function AdminDashboard({ user }) {
         e.preventDefault();
         setImporting(true);
         try {
-            const res = await fetch('http://localhost:3001/api/students/import', {
+            const res = await fetch('/api/students/import', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ bulkText, createdBy: user.id })
@@ -123,11 +128,11 @@ export default function AdminDashboard({ user }) {
                 const data = await res.json();
                 setBulkText('');
                 fetchUsers();
-                alert(`Success: Imported ${data.studentsImported} students!`);
+                toast.success(`Imported ${data.studentsImported} students!`);
                 setActiveTab('users');
             } else {
                 const errData = await res.json();
-                alert(`Error: ${errData.error || 'Failed to import students'}`);
+                toast.error(`Error: ${errData.error || 'Failed to import students'}`);
             }
         } catch (e) {
             console.error(e);

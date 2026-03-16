@@ -195,13 +195,17 @@ router.delete('/classes/:classId/students/:studentId', async (req, res) => {
 
 // Get quizzes for a specific author (teacher)
 router.get('/quizzes', async (req, res) => {
-    const { authorId } = req.query;
+    const { authorId, category } = req.query;
     try {
         let sql = 'SELECT * FROM quizzes WHERE is_active = 1';
         const params = [];
         if (authorId) {
             sql += ' AND author_id = ?';
             params.push(authorId);
+        }
+        if (category) {
+            sql += ' AND category = ?';
+            params.push(category);
         }
         const quizzes = await queryDb.all(sql, params);
         res.json(quizzes);
@@ -212,16 +216,25 @@ router.get('/quizzes', async (req, res) => {
 
 // Get ALL quizzes (Community Quizzes - excluding the requesting teacher's own quizzes)
 router.get('/quizzes/community/:excludeAuthorId', async (req, res) => {
+    const { category } = req.query;
     try {
         // Fetch quizzes and the author's username
-        const sql = `
+        let sql = `
             SELECT q.*, u.username as author_name 
             FROM quizzes q 
             LEFT JOIN users u ON q.author_id = u.id 
             WHERE q.is_shared = 1 AND q.is_active = 1 AND (q.author_id != ? OR q.author_id IS NULL)
-            ORDER BY q.created_at DESC
         `;
-        const quizzes = await queryDb.all(sql, [req.params.excludeAuthorId]);
+        const params = [req.params.excludeAuthorId];
+
+        if (category) {
+            sql += ' AND q.category = ?';
+            params.push(category);
+        }
+
+        sql += ' ORDER BY q.created_at DESC';
+
+        const quizzes = await queryDb.all(sql, params);
         res.json(quizzes);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -311,7 +324,7 @@ router.get('/quizzes/:id/export', async (req, res) => {
 
 // Edit Quiz (Structured JSON Versioning)
 router.put('/quizzes/:id/structure', async (req, res) => {
-    const { title, description, questions } = req.body;
+    const { title, description, category, questions } = req.body;
     const oldQuizId = req.params.id;
 
     try {
@@ -321,8 +334,8 @@ router.put('/quizzes/:id/structure', async (req, res) => {
 
         // 1. Create New Quiz
         const quizResult = await queryDb.run(
-            'INSERT INTO quizzes (title, description, author_id, is_shared, is_active) VALUES (?, ?, ?, ?, 1)',
-            [title, description, oldQuiz.author_id, oldQuiz.is_shared]
+            'INSERT INTO quizzes (title, description, category, author_id, is_shared, is_active) VALUES (?, ?, ?, ?, ?, 1)',
+            [title, description, category || oldQuiz.category || 'General', oldQuiz.author_id, oldQuiz.is_shared]
         );
         const newQuizId = quizResult.id;
 
@@ -330,15 +343,16 @@ router.put('/quizzes/:id/structure', async (req, res) => {
 
         for (const q of questions) {
             const questionResult = await queryDb.run(
-                'INSERT INTO questions (quiz_id, text, type, image_url, code_snippet, code_language) VALUES (?, ?, ?, ?, ?, ?)',
-                [newQuizId, q.text, q.type || 'multiple_choice', q.image_url || null, q.code_snippet || null, q.code_language || null]
+                'INSERT INTO questions (quiz_id, text, type, image_url, code_snippet, code_language, explanation) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [newQuizId, q.text, q.type || 'multiple_choice', q.image_url || null, q.code_snippet || null, q.code_language || null, q.explanation || null]
             );
 
             if (q.options && q.options.length > 0) {
                 for (const opt of q.options) {
+                    const isCorrect = opt.is_correct !== undefined ? opt.is_correct : opt.isCorrect;
                     await queryDb.run(
                         'INSERT INTO options (question_id, text, is_correct) VALUES (?, ?, ?)',
-                        [questionResult.id, opt.text, opt.isCorrect ? 1 : 0]
+                        [questionResult.id, opt.text, isCorrect ? 1 : 0]
                     );
                 }
             }
@@ -356,7 +370,7 @@ router.put('/quizzes/:id/structure', async (req, res) => {
 
 // Edit Quiz (Immutable Versioning)
 router.put('/quizzes/:id', async (req, res) => {
-    const { title, description, bulkText } = req.body;
+    const { title, description, category, bulkText } = req.body;
     const oldQuizId = req.params.id;
 
     try {
@@ -366,8 +380,8 @@ router.put('/quizzes/:id', async (req, res) => {
 
         // 1. Create New Quiz
         const quizResult = await queryDb.run(
-            'INSERT INTO quizzes (title, description, author_id, is_shared, is_active) VALUES (?, ?, ?, ?, 1)',
-            [title, description, oldQuiz.author_id, oldQuiz.is_shared]
+            'INSERT INTO quizzes (title, description, category, author_id, is_shared, is_active) VALUES (?, ?, ?, ?, ?, 1)',
+            [title, description, category || oldQuiz.category || 'General', oldQuiz.author_id, oldQuiz.is_shared]
         );
         const newQuizId = quizResult.id;
 
@@ -471,14 +485,14 @@ router.put('/quizzes/:id', async (req, res) => {
 
 // Create Quiz (Structured JSON)
 // JSON format expected:
-// { title, description, authorId, questions: [{ text, type, image_url, code_snippet, code_language, options: [{text, isCorrect}] }] }
+// { title, description, category, authorId, questions: [{ text, type, image_url, code_snippet, code_language, options: [{text, isCorrect}] }] }
 router.post('/quizzes/builder', async (req, res) => {
-    const { title, description, authorId, questions } = req.body;
+    const { title, description, category, authorId, questions } = req.body;
     try {
         // 1. Create Quiz
         const quizResult = await queryDb.run(
-            'INSERT INTO quizzes (title, description, author_id) VALUES (?, ?, ?)',
-            [title, description, authorId || null]
+            'INSERT INTO quizzes (title, description, category, author_id) VALUES (?, ?, ?, ?)',
+            [title, description, category || 'General', authorId || null]
         );
         const quizId = quizResult.id;
 
@@ -486,15 +500,16 @@ router.post('/quizzes/builder', async (req, res) => {
 
         for (const q of questions) {
             const questionResult = await queryDb.run(
-                'INSERT INTO questions (quiz_id, text, type, image_url, code_snippet, code_language) VALUES (?, ?, ?, ?, ?, ?)',
-                [quizId, q.text, q.type || 'multiple_choice', q.image_url || null, q.code_snippet || null, q.code_language || null]
+                'INSERT INTO questions (quiz_id, text, type, image_url, code_snippet, code_language, explanation) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [quizId, q.text, q.type || 'multiple_choice', q.image_url || null, q.code_snippet || null, q.code_language || null, q.explanation || null]
             );
 
             if (q.options && q.options.length > 0) {
                 for (const opt of q.options) {
+                    const isCorrect = opt.is_correct !== undefined ? opt.is_correct : opt.isCorrect;
                     await queryDb.run(
                         'INSERT INTO options (question_id, text, is_correct) VALUES (?, ?, ?)',
-                        [questionResult.id, opt.text, opt.isCorrect ? 1 : 0]
+                        [questionResult.id, opt.text, isCorrect ? 1 : 0]
                     );
                 }
             }
@@ -514,12 +529,12 @@ router.post('/quizzes/builder', async (req, res) => {
 // *B) Correct Option
 // C) Option
 router.post('/quizzes/import', async (req, res) => {
-    const { title, description, bulkText, authorId } = req.body;
+    const { title, description, category, bulkText, authorId } = req.body;
     try {
         // 1. Create Quiz
         const quizResult = await queryDb.run(
-            'INSERT INTO quizzes (title, description, author_id) VALUES (?, ?, ?)',
-            [title, description, authorId || null]
+            'INSERT INTO quizzes (title, description, category, author_id) VALUES (?, ?, ?, ?)',
+            [title, description, category || 'General', authorId || null]
         );
         const quizId = quizResult.id;
 
@@ -656,8 +671,8 @@ router.post('/quizzes/:id/copy', async (req, res) => {
 
         // 2. Insert new copied quiz
         const newQuiz = await queryDb.run(
-            'INSERT INTO quizzes (title, description, author_id) VALUES (?, ?, ?)',
-            [`${originalQuiz.title} (Copy)`, originalQuiz.description, newAuthorId]
+            'INSERT INTO quizzes (title, description, category, author_id) VALUES (?, ?, ?, ?)',
+            [`${originalQuiz.title} (Copy)`, originalQuiz.description, originalQuiz.category || 'General', newAuthorId]
         );
         const newQuizId = newQuiz.id;
 
@@ -665,8 +680,8 @@ router.post('/quizzes/:id/copy', async (req, res) => {
         const questions = await queryDb.all('SELECT * FROM questions WHERE quiz_id = ?', [sourceQuizId]);
         for (const q of questions) {
             const newQuestion = await queryDb.run(
-                'INSERT INTO questions (quiz_id, text, type, image_url, code_snippet, code_language) VALUES (?, ?, ?, ?, ?, ?)',
-                [newQuizId, q.text, q.type, q.image_url || null, q.code_snippet || null, q.code_language || null]
+                'INSERT INTO questions (quiz_id, text, type, image_url, code_snippet, code_language, explanation) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [newQuizId, q.text, q.type, q.image_url || null, q.code_snippet || null, q.code_language || null, q.explanation || null]
             );
 
             // 4. Get and copy all options for this question
@@ -742,6 +757,198 @@ router.put('/users/:id/password', async (req, res) => {
         await queryDb.run('UPDATE users SET password_hash = ? WHERE id = ?', [newPassword, req.params.id]);
         res.json({ message: 'Password updated successfully' });
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Export session results as CSV
+router.get('/sessions/:id/export', async (req, res) => {
+    try {
+        const sessionId = req.params.id;
+
+        // Fetch session and quiz details
+        const session = await queryDb.get('SELECT * FROM sessions WHERE id = ?', [sessionId]);
+        if (!session) return res.status(404).send('Session not found');
+
+        const quiz = await queryDb.get('SELECT title FROM quizzes WHERE id = ?', [session.quiz_id]);
+
+        // Fetch all questions for this quiz to calculate max score
+        const questionsRows = await queryDb.all('SELECT id FROM questions WHERE quiz_id = ?', [session.quiz_id]);
+        const totalQuestions = questionsRows.length;
+
+        // Fetch all responses joined with user details, question details, and option details
+        const responses = await queryDb.all(`
+            SELECT 
+                u.id as student_id,
+                u.username as student_name,
+                u.form_class,
+                q.id as question_id,
+                o.is_correct,
+                o.is_correct as score_awarded
+            FROM responses r
+            JOIN users u ON r.student_id = u.id
+            JOIN questions q ON r.question_id = q.id
+            JOIN options o ON r.option_id = o.id
+            WHERE r.session_id = ?
+        `, [sessionId]);
+
+        // Aggregate results per student
+        const studentResults = {};
+
+        responses.forEach(r => {
+            if (!studentResults[r.student_id]) {
+                studentResults[r.student_id] = {
+                    name: r.student_name,
+                    class: r.form_class || 'N/A',
+                    correctAnswers: 0,
+                    totalScore: 0
+                };
+            }
+
+            if (r.is_correct) {
+                studentResults[r.student_id].correctAnswers++;
+            }
+            studentResults[r.student_id].totalScore += (r.score_awarded || 0);
+        });
+
+        // Convert the aggregated object into a CSV string
+        // Headers: Student Name, Class, Score, Correct Answers, Total Questions, Date
+        const csvRows = [];
+        csvRows.push(['Student Name', 'Class', 'Score', 'Correct Answers', 'Total Questions', 'Date Completed']); // Header row
+
+        const dateCompleted = new Date(session.ended_at || session.created_at).toLocaleDateString();
+
+        Object.values(studentResults).forEach(student => {
+            csvRows.push([
+                student.name,
+                student.class,
+                student.totalScore,
+                student.correctAnswers,
+                totalQuestions,
+                dateCompleted
+            ]);
+        });
+
+        // Escape CSV values to handle commas inside text
+        const csvString = csvRows.map(row =>
+            row.map(cell => {
+                let cellStr = String(cell);
+                if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+                    cellStr = `"${cellStr.replace(/"/g, '""')}"`;
+                }
+                return cellStr;
+            }).join(',')
+        ).join('\n');
+
+        // Set response headers to trigger a download
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="Quiz_Results_${(quiz?.title || 'Session').replace(/[^a-z0-9]/gi, '_')}.csv"`);
+
+        res.send(csvString);
+
+    } catch (error) {
+        console.error('Error generating CSV export:', error);
+        res.status(500).send('Failed to generate export');
+    }
+});
+
+// --- Analytics ---
+
+// Get growth data for a specific class
+router.get('/analytics/growth', async (req, res) => {
+    const { classId } = req.query;
+    if (!classId) return res.status(400).json({ error: 'classId is required' });
+
+    try {
+        // 1. Fetch all COMPLETED sessions for this class, ordered by date
+        const sessions = await queryDb.all(`
+            SELECT s.id, s.name as session_name, q.title as quiz_title, s.created_at
+            FROM sessions s
+            JOIN quizzes q ON s.quiz_id = q.id
+            WHERE s.class_id = ? AND s.status = 'completed'
+            ORDER BY s.created_at ASC
+        `, [classId]);
+
+        if (sessions.length === 0) {
+            return res.json({ labels: [], classAverages: [], studentData: {} });
+        }
+
+        // 2. Fetch all responses for these sessions
+        const sessionIds = sessions.map(s => s.id);
+        const placeholders = sessionIds.map(() => '?').join(',');
+
+        const responses = await queryDb.all(`
+            SELECT 
+                r.session_id, 
+                r.student_id, 
+                r.question_id, 
+                o.is_correct as score_awarded,
+                u.username
+            FROM responses r
+            JOIN options o ON r.option_id = o.id
+            JOIN users u ON r.student_id = u.id
+            WHERE r.session_id IN (${placeholders})
+        `, sessionIds);
+
+        const questionsPerSession = {};
+        for (const session of sessions) {
+            const sessionData = await queryDb.get('SELECT quiz_id FROM sessions WHERE id = ?', [session.id]);
+            const qs = await queryDb.all('SELECT id FROM questions WHERE quiz_id = ?', [sessionData.quiz_id]);
+            questionsPerSession[session.id] = qs.length || 1; // avoid div/0
+        }
+
+        // 3. Aggregate data
+        const labels = sessions.map(s => {
+            const date = new Date(s.created_at);
+            return `${s.session_name || s.quiz_title} (${date.toLocaleDateString()})`;
+        });
+
+        const classAverages = [];
+        const studentData = {}; // studentId -> { username, scores: [score1, score2, ...] }
+
+        sessions.forEach((session, idx) => {
+            const sessionResponses = responses.filter(r => r.session_id === session.id);
+            const totalQ = questionsPerSession[session.id];
+
+            // Map student -> total score for this session
+            const studentScoresThisSession = {};
+            sessionResponses.forEach(r => {
+                if (!studentScoresThisSession[r.student_id]) studentScoresThisSession[r.student_id] = 0;
+                studentScoresThisSession[r.student_id] += (r.score_awarded || 0);
+
+                if (!studentData[r.student_id]) {
+                    studentData[r.student_id] = {
+                        username: r.username,
+                        // initialize array with nulls up to current session to handle missed previous quizzes
+                        scores: Array(sessions.length).fill(null)
+                    };
+                }
+            });
+
+            // Calculate class average for this session
+            const studentIdsWhoTookIt = Object.keys(studentScoresThisSession);
+            if (studentIdsWhoTookIt.length > 0) {
+                let sessionTotalPct = 0;
+                studentIdsWhoTookIt.forEach(studentId => {
+                    const rawScore = studentScoresThisSession[studentId];
+                    const pct = Math.round((rawScore / totalQ) * 100);
+                    sessionTotalPct += pct;
+                    studentData[studentId].scores[idx] = pct;
+                });
+                classAverages.push(Math.round(sessionTotalPct / studentIdsWhoTookIt.length));
+            } else {
+                classAverages.push(null);
+            }
+        });
+
+        res.json({
+            labels,
+            classAverages,
+            studentData
+        });
+
+    } catch (error) {
+        console.error('Error generating growth analytics:', error);
         res.status(500).json({ error: error.message });
     }
 });

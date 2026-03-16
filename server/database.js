@@ -39,6 +39,7 @@ function initializeTables() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       description TEXT,
+      category TEXT DEFAULT 'General',
       author_id INTEGER,
       is_shared INTEGER DEFAULT 0,
       is_active INTEGER DEFAULT 1,
@@ -51,9 +52,14 @@ function initializeTables() {
     CREATE TABLE IF NOT EXISTS questions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       quiz_id INTEGER NOT NULL,
+      type TEXT NOT NULL,
       text TEXT NOT NULL,
-      type TEXT DEFAULT 'multiple_choice',
       image_url TEXT,
+      code_snippet TEXT,
+      code_language TEXT,
+      points INTEGER DEFAULT 1,
+      order_idx INTEGER NOT NULL,
+      explanation TEXT,
       FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
     )
   `;
@@ -100,6 +106,9 @@ function initializeTables() {
       class_id INTEGER,
       time_limit INTEGER,
       randomize_questions INTEGER DEFAULT 0,
+      shuffle_options INTEGER DEFAULT 0,
+      is_team_mode INTEGER DEFAULT 0,
+      join_code TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,
       FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL
@@ -123,6 +132,7 @@ function initializeTables() {
       student_id INTEGER NOT NULL,
       question_id INTEGER NOT NULL,
       option_id INTEGER NOT NULL,
+      points_earned INTEGER DEFAULT 0,
       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
       FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -136,7 +146,9 @@ function initializeTables() {
     CREATE TABLE IF NOT EXISTS session_submissions (
       session_id INTEGER NOT NULL,
       student_id INTEGER NOT NULL,
+      badges TEXT DEFAULT '[]',
       submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      started_at DATETIME,
       PRIMARY KEY (session_id, student_id),
       FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
       FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
@@ -156,68 +168,122 @@ function initializeTables() {
     db.run(sessionSubmissionsTable);
     console.log('Database tables initialized.');
 
-    // Automatic Migration: Add created_at to sessions if it doesn't exist
-    db.all("PRAGMA table_info(sessions);", (err, rows) => {
-      if (err) {
-        console.error("Error checking sessions schema:", err);
-        return;
-      }
-      const hasCreatedAt = rows.some(r => r.name === 'created_at');
-      if (!hasCreatedAt) {
-        db.run("ALTER TABLE sessions ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP", (alterErr) => {
-          if (alterErr) console.error("Error adding created_at column to sessions:", alterErr);
-          else console.log("Successfully migrated sessions table to include created_at column.");
-        });
-      }
+    // --- ALL DATABASE MIGRATIONS ---
 
-      const hasClassId = rows.some(r => r.name === 'class_id');
-      if (!hasClassId) {
-        db.run("ALTER TABLE sessions ADD COLUMN class_id INTEGER REFERENCES classes(id) ON DELETE SET NULL", (alterErr) => {
-          if (alterErr) console.error("Error adding class_id column to sessions:", alterErr);
-          else console.log("Successfully migrated sessions table to include class_id column.");
-        });
-      }
-    });
-
-    // Automatic Migration: Add form_class to users if it doesn't exist
+    // 1. Users table migrations
     db.all("PRAGMA table_info(users);", (err, rows) => {
       if (err) return console.error("Error checking users schema:", err);
       const hasFormClass = rows.some(r => r.name === 'form_class');
       if (!hasFormClass) {
         db.run("ALTER TABLE users ADD COLUMN form_class TEXT", (alterErr) => {
-          if (alterErr) console.error("Error adding form_class column to users:", alterErr);
-          else console.log("Successfully migrated users table to include form_class column.");
+          if (alterErr) console.error("Error adding form_class to users:", alterErr);
+          else console.log("Migrated: Added form_class to users.");
         });
       }
     });
 
-    // Automatic Migration: AI Features & Timers
-    db.run("ALTER TABLE quizzes ADD COLUMN quiz_type TEXT DEFAULT 'standard'", (err) => {
-      if (!err) console.log("Added quiz_type to quizzes.");
+    // 2. Questions table migrations (Crucial for scoring and explanations)
+    db.all("PRAGMA table_info(questions);", (err, rows) => {
+      if (err) return console.error("Error checking questions schema:", err);
+
+      const missingCols = [
+        { name: 'explanation', type: 'TEXT' },
+        { name: 'rubric', type: 'TEXT' },
+        { name: 'points', type: 'INTEGER DEFAULT 1' },
+        { name: 'order_idx', type: 'INTEGER DEFAULT 0' },
+        { name: 'image_url', type: 'TEXT' },
+        { name: 'code_snippet', type: 'TEXT' },
+        { name: 'code_language', type: 'TEXT' }
+      ];
+
+      missingCols.forEach(col => {
+        if (!rows.some(r => r.name === col.name)) {
+          db.run(`ALTER TABLE questions ADD COLUMN ${col.name} ${col.type}`, (alterErr) => {
+            if (alterErr) console.error(`Error adding ${col.name} to questions:`, alterErr);
+            else console.log(`Migrated: Added ${col.name} to questions.`);
+          });
+        }
+      });
     });
 
-    db.run("ALTER TABLE questions ADD COLUMN rubric TEXT", (err) => {
-      if (!err) console.log("Added rubric to questions.");
+    // 3. Sessions table migrations (Crucial for starting quizzes)
+    db.all("PRAGMA table_info(sessions);", (err, rows) => {
+      if (err) return console.error("Error checking sessions schema:", err);
+
+      const missingCols = [
+        { name: 'created_at', type: 'DATETIME DEFAULT CURRENT_TIMESTAMP' },
+        { name: 'class_id', type: 'INTEGER' },
+        { name: 'join_code', type: 'TEXT' },
+        { name: 'shuffle_options', type: 'INTEGER DEFAULT 0' },
+        { name: 'is_team_mode', type: 'INTEGER DEFAULT 0' },
+        { name: 'time_limit', type: 'INTEGER' },
+        { name: 'is_archived', type: 'INTEGER DEFAULT 0' }
+      ];
+
+      missingCols.forEach(col => {
+        if (!rows.some(r => r.name === col.name)) {
+          db.run(`ALTER TABLE sessions ADD COLUMN ${col.name} ${col.type}`, (alterErr) => {
+            if (alterErr) console.error(`Error adding ${col.name} to sessions:`, alterErr);
+            else console.log(`Migrated: Added ${col.name} to sessions.`);
+          });
+        }
+      });
     });
 
-    db.run("ALTER TABLE sessions ADD COLUMN time_limit INTEGER", (err) => {
-      if (!err) console.log("Added time_limit to sessions.");
+    // 4. Responses table migrations (For short-answer scoring)
+    db.all("PRAGMA table_info(responses);", (err, rows) => {
+      if (err) return console.error("Error checking responses schema:", err);
+
+      const missingCols = [
+        { name: 'text_answer', type: 'TEXT' },
+        { name: 'ai_score', type: 'INTEGER' },
+        { name: 'ai_feedback', type: 'TEXT' },
+        { name: 'points_earned', type: 'INTEGER DEFAULT 0' }
+      ];
+
+      missingCols.forEach(col => {
+        if (!rows.some(r => r.name === col.name)) {
+          db.run(`ALTER TABLE responses ADD COLUMN ${col.name} ${col.type}`, (alterErr) => {
+            if (alterErr) console.error(`Error adding ${col.name} to responses:`, alterErr);
+            else console.log(`Migrated: Added ${col.name} to responses.`);
+          });
+        }
+      });
     });
 
-    db.run("ALTER TABLE session_submissions ADD COLUMN started_at DATETIME", (err) => {
-      if (!err) console.log("Added started_at to session_submissions.");
+    // 5. Quiz table migrations
+    db.all("PRAGMA table_info(quizzes);", (err, rows) => {
+      if (err) return console.error("Error checking quizzes schema:", err);
+      if (!rows.some(r => r.name === 'is_active')) {
+        db.run("ALTER TABLE quizzes ADD COLUMN is_active INTEGER DEFAULT 1", (err) => {
+          if (!err) console.log("Migrated: Added is_active to quizzes.");
+        });
+      }
+      if (!rows.some(r => r.name === 'quiz_type')) {
+        db.run("ALTER TABLE quizzes ADD COLUMN quiz_type TEXT DEFAULT 'standard'", (err) => {
+          if (!err) console.log("Migrated: Added quiz_type to quizzes.");
+        });
+      }
+      if (!rows.some(r => r.name === 'category')) {
+        db.run("ALTER TABLE quizzes ADD COLUMN category TEXT DEFAULT 'General'", (err) => {
+          if (!err) console.log("Migrated: Added category to quizzes.");
+        });
+      }
     });
 
-    db.run("ALTER TABLE responses ADD COLUMN text_answer TEXT", (err) => {
-      if (!err) console.log("Added text_answer to responses.");
-    });
-
-    db.run("ALTER TABLE responses ADD COLUMN ai_score INTEGER", (err) => {
-      if (!err) console.log("Added ai_score to responses.");
-    });
-
-    db.run("ALTER TABLE responses ADD COLUMN ai_feedback TEXT", (err) => {
-      if (!err) console.log("Added ai_feedback to responses.");
+    // 6. Session Submissions table migrations
+    db.all("PRAGMA table_info(session_submissions);", (err, rows) => {
+      if (err) return console.error("Error checking session_submissions schema:", err);
+      if (!rows.some(r => r.name === 'started_at')) {
+        db.run("ALTER TABLE session_submissions ADD COLUMN started_at DATETIME", (err) => {
+          if (!err) console.log("Migrated: Added started_at to session_submissions.");
+        });
+      }
+      if (!rows.some(r => r.name === 'badges')) {
+        db.run("ALTER TABLE session_submissions ADD COLUMN badges TEXT DEFAULT '[]'", (err) => {
+          if (!err) console.log("Migrated: Added badges to session_submissions.");
+        });
+      }
     });
   });
 }

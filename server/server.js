@@ -17,6 +17,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Global Logging for debugging Windows deployment
+app.use((req, res, next) => {
+    console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.path}`);
+    next();
+});
+
 import apiRoutes from './api.js';
 app.use('/api', apiRoutes);
 
@@ -55,9 +61,10 @@ app.get('/api/sessions', async (req, res) => {
 app.get('/api/sessions/teacher/:teacherId', async (req, res) => {
     try {
         const sessions = await queryDb.all(`
-            SELECT s.*, q.title as quiz_title, s.created_at
+            SELECT s.*, q.title as quiz_title, c.name as class_name, s.created_at
             FROM sessions s
             JOIN quizzes q ON s.quiz_id = q.id
+            LEFT JOIN classes c ON s.class_id = c.id
             WHERE q.author_id = ?
             ORDER BY s.id DESC
         `, [req.params.teacherId]);
@@ -71,12 +78,15 @@ app.get('/api/sessions/teacher/:teacherId', async (req, res) => {
 app.get('/api/sessions/student/:studentId', async (req, res) => {
     try {
         const sql = `
-            SELECT s.*, q.title as quiz_title, c.name as class_name, t.username as teacher_name
+            SELECT s.*, q.title as quiz_title, c.name as class_name, t.username as teacher_name, 
+                   CASE WHEN sub.student_id IS NOT NULL THEN 1 ELSE 0 END as is_submitted,
+                   sub.submitted_at
             FROM sessions s
             JOIN quizzes q ON s.quiz_id = q.id
             JOIN classes c ON s.class_id = c.id
             JOIN class_students cs ON c.id = cs.class_id
             JOIN users t ON c.teacher_id = t.id
+            LEFT JOIN session_submissions sub ON s.id = sub.session_id AND sub.student_id = cs.student_id
             WHERE cs.student_id = ?
             ORDER BY s.id DESC
         `;
@@ -98,15 +108,54 @@ app.get('/api/sessions/:id', async (req, res) => {
     }
 });
 
+// Function to generate 8-char code
+function generateJoinCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+        if (i === 4) code += '-';
+        else code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
 // Create a new valid session in DB before joining via socket
 app.post('/api/sessions', async (req, res) => {
-    const { quiz_id, mode, name, class_id, time_limit, randomize_questions } = req.body;
+    const { quiz_id, mode, name, class_id, time_limit, randomize_questions, shuffle_options, is_team_mode } = req.body;
+    console.log(`--- Creating Session: "${name}" (Quiz: ${quiz_id}, Class: ${class_id}) ---`);
     try {
+        let isUnique = false;
+        let join_code = '';
+        while (!isUnique) {
+            join_code = generateJoinCode();
+            const existing = await queryDb.get('SELECT id FROM sessions WHERE join_code = ?', [join_code]);
+            if (!existing) isUnique = true;
+        }
+
         const result = await queryDb.run(
-            'INSERT INTO sessions (quiz_id, mode, status, name, class_id, time_limit, randomize_questions) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [quiz_id, mode, 'active', name, class_id || null, time_limit || null, randomize_questions ? 1 : 0]
+            'INSERT INTO sessions (quiz_id, mode, status, name, class_id, time_limit, randomize_questions, shuffle_options, is_team_mode, join_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [quiz_id, mode, 'active', name, class_id || null, time_limit || null, randomize_questions ? 1 : 0, shuffle_options ? 1 : 0, is_team_mode ? 1 : 0, join_code]
         );
-        res.json({ sessionId: result.id });
+        console.log(`Success: Session created with ID ${result.id} and Code ${join_code}`);
+        res.json({ sessionId: result.id, join_code });
+    } catch (error) {
+        console.error('ERROR during session creation:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Join session by code
+app.get('/api/sessions/join/:code', async (req, res) => {
+    try {
+        const session = await queryDb.get(
+            `SELECT s.*, q.title as quiz_title 
+             FROM sessions s 
+             JOIN quizzes q ON s.quiz_id = q.id 
+             WHERE s.join_code = ? AND s.status = 'active' AND s.is_archived = 0`,
+            [req.params.code.toUpperCase()]
+        );
+        if (!session) return res.status(404).json({ error: 'Session not found or no longer active' });
+        res.json(session);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -176,23 +225,21 @@ app.get('/api/sessions/:id/submission/:studentId', async (req, res) => {
 
 // Submit an Async session
 app.post('/api/sessions/:id/submit', async (req, res) => {
-    const { studentId } = req.body;
     try {
-        // Find existing record to update the completion timestamp, or insert if missing (though the start endpoint should have created it)
-        const existing = await queryDb.get('SELECT * FROM session_submissions WHERE session_id = ? AND student_id = ?', [req.params.id, studentId]);
+        const { studentId } = req.body;
+        const sessionId = req.params.id;
 
-        if (existing) {
-            await queryDb.run(
-                'UPDATE session_submissions SET submitted_at = datetime("now", "utc") WHERE session_id = ? AND student_id = ?',
-                [req.params.id, studentId]
-            );
-        } else {
-            await queryDb.run(
-                'INSERT INTO session_submissions (session_id, student_id, submitted_at) VALUES (?, ?, datetime("now", "utc"))',
-                [req.params.id, studentId]
-            );
+        let badgesJson = '[]';
+        if (activeSessions[sessionId] && activeSessions[sessionId].earnedBadges[studentId]) {
+            const badges = Array.from(activeSessions[sessionId].earnedBadges[studentId]);
+            badgesJson = JSON.stringify(badges);
         }
-        res.json({ message: 'Session submitted successfully' });
+
+        await queryDb.run(
+            'INSERT OR REPLACE INTO session_submissions (session_id, student_id, badges, submitted_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
+            [sessionId, studentId, badgesJson]
+        );
+        res.json({ message: 'Submission successful' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -253,7 +300,21 @@ app.get('/api/sessions/:id/results/:studentId', async (req, res) => {
             });
         }
 
-        res.json({ results: finalResults });
+        const pointsRow = await queryDb.get(
+            'SELECT SUM(points_earned) as totalPoints FROM responses WHERE session_id = ? AND student_id = ?',
+            [req.params.id, req.params.studentId]
+        );
+
+        const subRow = await queryDb.get(
+            'SELECT badges FROM session_submissions WHERE session_id = ? AND student_id = ?',
+            [req.params.id, req.params.studentId]
+        );
+
+        res.json({
+            results: finalResults,
+            totalPoints: pointsRow ? (pointsRow.totalPoints || 0) : 0,
+            badges: subRow ? JSON.parse(subRow.badges || '[]') : []
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -329,6 +390,7 @@ app.get('/api/sessions/:id/teacher-results', async (req, res) => {
                 questionText: q.text,
                 questionType: q.type,
                 imageUrl: q.image_url,
+                explanation: q.explanation,
                 options: optionsWithCounts
             });
         }
@@ -351,12 +413,35 @@ io.on('connection', (socket) => {
 
         // Initialize session state if not exists
         if (!activeSessions[sessionId]) {
+            // Fetch session configuration from DB
+            let isTeamMode = 0;
+            try {
+                const sessionRecord = await queryDb.get('SELECT is_team_mode FROM sessions WHERE id = ?', [sessionId]);
+                if (sessionRecord) {
+                    isTeamMode = sessionRecord.is_team_mode;
+                }
+            } catch (err) {
+                console.error("Error fetching session for team mode:", err);
+            }
+
             activeSessions[sessionId] = {
                 participants: new Set(),
                 participantDetails: {}, // userId -> username
                 currentQuestionIndex: 0,
                 results: {}, // questionId -> optionId -> count
-                answeredStudents: {} // questionId -> Set of userIds
+                answeredStudents: {}, // questionId -> Set of userIds
+                locked: false,
+                timerStart: null,
+                timerDuration: null,
+                timerQuestionIndex: null,
+                isTeamMode: isTeamMode === 1,
+                teams: {}, // userId -> teamName ('Red', 'Blue', 'Green', 'Yellow')
+                teamScores: { 'Red': 0, 'Blue': 0, 'Green': 0, 'Yellow': 0 },
+                individualScores: {}, // userId -> total score
+                streaks: {}, // userId -> consecutive correct answers
+                questionStartTime: Date.now(), // Track when the question was shown for dynamic scoring
+                firstToAnswer: false, // Flag to track if someone has answered the current question correctly yet
+                earnedBadges: {} // userId -> Set of badge names
             };
         }
 
@@ -365,11 +450,24 @@ io.on('connection', (socket) => {
             if (username) {
                 activeSessions[sessionId].participantDetails[userId] = username;
             }
+
+            // Assign to team if in Team Mode and not already assigned
+            if (activeSessions[sessionId].isTeamMode && !activeSessions[sessionId].teams[userId]) {
+                const availableTeams = ['Red', 'Blue', 'Green', 'Yellow'];
+                // Simple random assignment for now. Could balance based on current team sizes.
+                const randomTeam = availableTeams[Math.floor(Math.random() * availableTeams.length)];
+                activeSessions[sessionId].teams[userId] = randomTeam;
+            }
+
             // Notify teacher of participant count and newly updated details
             io.to(`session_${sessionId}`).emit('participants_update', {
                 count: activeSessions[sessionId].participants.size,
-                details: activeSessions[sessionId].participantDetails
+                details: activeSessions[sessionId].participantDetails,
+                teams: activeSessions[sessionId].teams
             });
+
+            // Send standard student joining state, including their team assignment
+            socket.emit('assigned_team', { team: activeSessions[sessionId].teams[userId] });
         }
 
         // Send current session state to the newly connected user
@@ -383,7 +481,15 @@ io.on('connection', (socket) => {
         socket.emit('session_state', {
             currentQuestionIndex: activeSessions[sessionId].currentQuestionIndex,
             results: activeSessions[sessionId].results,
-            answeredStudents: answeredArrays
+            answeredStudents: answeredArrays,
+            locked: activeSessions[sessionId].locked,
+            timerStart: activeSessions[sessionId].timerStart,
+            timerDuration: activeSessions[sessionId].timerDuration,
+            timerQuestionIndex: activeSessions[sessionId].timerQuestionIndex,
+            isTeamMode: activeSessions[sessionId].isTeamMode,
+            teamScores: activeSessions[sessionId].teamScores,
+            individualScores: activeSessions[sessionId].individualScores,
+            streaks: activeSessions[sessionId].streaks
         });
     });
 
@@ -391,16 +497,44 @@ io.on('connection', (socket) => {
     socket.on('next_question', ({ sessionId, newIndex }) => {
         if (activeSessions[sessionId]) {
             activeSessions[sessionId].currentQuestionIndex = newIndex;
+            activeSessions[sessionId].locked = false;
+            activeSessions[sessionId].timerStart = null;
+            activeSessions[sessionId].timerDuration = null;
+            activeSessions[sessionId].questionStartTime = Date.now();
+            activeSessions[sessionId].firstToAnswer = false;
             io.to(`session_${sessionId}`).emit('question_changed', { newIndex });
+        }
+    });
+
+    // Teacher toggles question lock
+    socket.on('toggle_lock', ({ sessionId, locked }) => {
+        if (activeSessions[sessionId]) {
+            activeSessions[sessionId].locked = locked;
+            io.to(`session_${sessionId}`).emit('question_locked', { locked });
+        }
+    });
+
+    // Teacher starts a timer for current question
+    socket.on('start_question_timer', ({ sessionId, durationSeconds, autoAdvance }) => {
+        if (activeSessions[sessionId]) {
+            activeSessions[sessionId].timerStart = Date.now();
+            activeSessions[sessionId].timerDuration = durationSeconds;
+            activeSessions[sessionId].timerQuestionIndex = activeSessions[sessionId].currentQuestionIndex;
+            io.to(`session_${sessionId}`).emit('timer_started', {
+                duration: durationSeconds,
+                startedAt: activeSessions[sessionId].timerStart,
+                autoAdvance
+            });
         }
     });
 
     // Student submits an answer
     socket.on('submit_answer', async ({ sessionId, studentId, questionId, optionId }) => {
+        if (activeSessions[sessionId] && activeSessions[sessionId].locked) return;
         try {
             await queryDb.run(
-                'INSERT OR REPLACE INTO responses (session_id, student_id, question_id, option_id) VALUES (?, ?, ?, ?)',
-                [sessionId, studentId, questionId, optionId]
+                'INSERT OR REPLACE INTO responses (session_id, student_id, question_id, option_id, points_earned) VALUES (?, ?, ?, ?, ?)',
+                [sessionId, studentId, questionId, optionId, 0] // Default to 0, will update if correct
             );
 
             if (!activeSessions[sessionId]) return;
@@ -417,6 +551,94 @@ io.on('connection', (socket) => {
             }
             activeSessions[sessionId].answeredStudents[questionId].add(studentId);
 
+            // Update team scores if in Team Mode
+            let pointsEarned = 0;
+            const optRecord = await queryDb.get('SELECT is_correct FROM options WHERE id = ?', [optionId]);
+
+            if (optRecord && optRecord.is_correct === 1) {
+                // Determine streak and badges
+                if (!activeSessions[sessionId].streaks[studentId]) {
+                    activeSessions[sessionId].streaks[studentId] = 0;
+                }
+                activeSessions[sessionId].streaks[studentId] += 1;
+                const currentStreak = activeSessions[sessionId].streaks[studentId];
+
+                if (currentStreak >= 3) {
+                    const badgeName = 'On Fire! 🔥';
+                    if (!activeSessions[sessionId].earnedBadges[studentId]) {
+                        activeSessions[sessionId].earnedBadges[studentId] = new Set();
+                    }
+                    activeSessions[sessionId].earnedBadges[studentId].add(badgeName);
+
+                    io.to(`session_${sessionId}`).emit('badge_earned', {
+                        studentId,
+                        badge: badgeName,
+                        streak: currentStreak
+                    });
+                }
+
+                if (!activeSessions[sessionId].firstToAnswer) {
+                    activeSessions[sessionId].firstToAnswer = true;
+                    const badgeName = 'Quick Draw ⚡';
+                    if (!activeSessions[sessionId].earnedBadges[studentId]) {
+                        activeSessions[sessionId].earnedBadges[studentId] = new Set();
+                    }
+                    activeSessions[sessionId].earnedBadges[studentId].add(badgeName);
+
+                    io.to(`session_${sessionId}`).emit('badge_earned', {
+                        studentId,
+                        badge: badgeName
+                    });
+                }
+
+                // Calculate Dynamic Points based on time
+                const maxPoints = 1000;
+                // Min 500 points for a correct answer, decay over 10 seconds (10000ms) down to 500
+                const timeTaken = Date.now() - (activeSessions[sessionId].questionStartTime || Date.now());
+                const timeRatio = Math.min(Math.max(timeTaken / 10000, 0), 1); // 0 to 1
+                const basePoints = Math.round(maxPoints - ((maxPoints - 500) * timeRatio));
+
+                // Add a small streak multiplier (e.g. 10% bonus for streak > 1)
+                const multiplier = currentStreak > 1 ? 1 + (Math.min(currentStreak, 5) * 0.1) : 1;
+                pointsEarned = Math.round(basePoints * multiplier);
+
+                if (!activeSessions[sessionId].individualScores[studentId]) {
+                    activeSessions[sessionId].individualScores[studentId] = 0;
+                }
+                activeSessions[sessionId].individualScores[studentId] += pointsEarned;
+
+                // Persist the points earned to the DB
+                await queryDb.run(
+                    'UPDATE responses SET points_earned = ? WHERE session_id = ? AND student_id = ? AND question_id = ?',
+                    [pointsEarned, sessionId, studentId, questionId]
+                );
+
+                if (activeSessions[sessionId].isTeamMode) {
+                    const studentTeam = activeSessions[sessionId].teams[studentId];
+                    if (studentTeam) {
+                        activeSessions[sessionId].teamScores[studentTeam] += pointsEarned;
+                        io.to(`session_${sessionId}`).emit('team_scores_update', {
+                            teamScores: activeSessions[sessionId].teamScores
+                        });
+                    }
+                }
+
+                // Send a private update to the student with their new score/streak
+                io.to(`session_${sessionId}`).emit('student_score_update', {
+                    studentId,
+                    individualScores: activeSessions[sessionId].individualScores,
+                    streaks: activeSessions[sessionId].streaks
+                });
+            } else {
+                // Reset streak on wrong answer
+                activeSessions[sessionId].streaks[studentId] = 0;
+                io.to(`session_${sessionId}`).emit('student_score_update', {
+                    studentId,
+                    individualScores: activeSessions[sessionId].individualScores, // No change, but helpful to sync
+                    streaks: activeSessions[sessionId].streaks
+                });
+            }
+
             io.to(`session_${sessionId}`).emit('results_update', {
                 questionId,
                 results: activeSessions[sessionId].results[questionId],
@@ -429,6 +651,7 @@ io.on('connection', (socket) => {
 
     // Student submits a Short Answer text
     socket.on('submit_answer_text', async ({ sessionId, studentId, questionId, text }) => {
+        if (activeSessions[sessionId] && activeSessions[sessionId].locked) return;
         try {
             if (!text || text.trim() === '') return;
 
@@ -479,6 +702,71 @@ io.on('connection', (socket) => {
                 activeSessions[sessionId].answeredStudents[questionId] = new Set();
             }
             activeSessions[sessionId].answeredStudents[questionId].add(studentId);
+
+            // Dynamic Scoring Logic for Short Answer
+            let pointsEarned = 0;
+            if (isMatch) { // We ALREADY checked if correct earlier in this function
+                // Determine streak and badges
+                if (!activeSessions[sessionId].streaks[studentId]) {
+                    activeSessions[sessionId].streaks[studentId] = 0;
+                }
+                activeSessions[sessionId].streaks[studentId] += 1;
+                const currentStreak = activeSessions[sessionId].streaks[studentId];
+
+                if (currentStreak >= 3) {
+                    io.to(`session_${sessionId}`).emit('badge_earned', {
+                        studentId,
+                        badge: 'On Fire! 🔥',
+                        streak: currentStreak
+                    });
+                }
+
+                if (!activeSessions[sessionId].firstToAnswer) {
+                    activeSessions[sessionId].firstToAnswer = true;
+                    io.to(`session_${sessionId}`).emit('badge_earned', {
+                        studentId,
+                        badge: 'Quick Draw ⚡'
+                    });
+                }
+
+                // Calculate Dynamic Points based on time
+                const maxPoints = 1000;
+                const timeTaken = Date.now() - (activeSessions[sessionId].questionStartTime || Date.now());
+                const timeRatio = Math.min(Math.max(timeTaken / 10000, 0), 1);
+                const basePoints = Math.round(maxPoints - ((maxPoints - 500) * timeRatio));
+
+                const multiplier = currentStreak > 1 ? 1 + (Math.min(currentStreak, 5) * 0.1) : 1;
+                pointsEarned = Math.round(basePoints * multiplier);
+
+                if (!activeSessions[sessionId].individualScores[studentId]) {
+                    activeSessions[sessionId].individualScores[studentId] = 0;
+                }
+                activeSessions[sessionId].individualScores[studentId] += pointsEarned;
+
+                if (activeSessions[sessionId].isTeamMode) {
+                    const studentTeam = activeSessions[sessionId].teams[studentId];
+                    if (studentTeam) {
+                        activeSessions[sessionId].teamScores[studentTeam] += pointsEarned;
+                        io.to(`session_${sessionId}`).emit('team_scores_update', {
+                            teamScores: activeSessions[sessionId].teamScores
+                        });
+                    }
+                }
+
+                io.to(`session_${sessionId}`).emit('student_score_update', {
+                    studentId,
+                    individualScores: activeSessions[sessionId].individualScores,
+                    streaks: activeSessions[sessionId].streaks
+                });
+            } else {
+                // Reset streak on wrong answer
+                activeSessions[sessionId].streaks[studentId] = 0;
+                io.to(`session_${sessionId}`).emit('student_score_update', {
+                    studentId,
+                    individualScores: activeSessions[sessionId].individualScores,
+                    streaks: activeSessions[sessionId].streaks
+                });
+            }
 
             io.to(`session_${sessionId}`).emit('results_update', {
                 questionId,
@@ -545,6 +833,25 @@ app.post('/api/sessions/:id/start', async (req, res) => {
     } catch (error) {
         console.error('Error starting async session for student:', error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+// --- Production Frontend Serving ---
+const clientDistPath = join(__dirname, '../client/dist');
+console.log('Serving static files from:', clientDistPath);
+app.use(express.static(clientDistPath));
+
+// Catch-all to route any unknown requests back to React (for React Router SPA)
+app.get('*', (req, res) => {
+    // Only serve index.html if it's not an API route
+    if (!req.path.startsWith('/api')) {
+        res.sendFile(join(clientDistPath, 'index.html'), (err) => {
+            if (err) {
+                res.status(500).send("<h3>Frontend build not found!</h3><p>Please ensure you have run <code>npm run build</code> inside the <code>client</code> folder and that the <code>dist</code> folder was copied to the server.</p>");
+            }
+        });
+    } else {
+        res.status(404).json({ error: 'API route not found' });
     }
 });
 

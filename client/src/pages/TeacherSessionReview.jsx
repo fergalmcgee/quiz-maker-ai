@@ -11,7 +11,7 @@ export default function TeacherSessionReview({ user }) {
     useEffect(() => {
         const fetchResults = async () => {
             try {
-                const res = await fetch(`http://localhost:3001/api/sessions/${sessionId}/teacher-results`);
+                const res = await fetch(`/api/sessions/${sessionId}/teacher-results`);
                 if (res.ok) {
                     const data = await res.json();
                     setResults(data);
@@ -32,6 +32,26 @@ export default function TeacherSessionReview({ user }) {
 
     const { session, questions, participants } = results;
 
+    const handleDownloadCSV = async () => {
+        try {
+            const res = await fetch(`/api/sessions/${sessionId}/export`);
+            if (!res.ok) throw new Error('Failed to generate CSV');
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Results-${session.name || session.quizTitle}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Download failed:', error);
+            alert('Failed to download CSV');
+        }
+    };
+
     return (
         <div className="fade-in" style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem' }}>
             <button
@@ -46,17 +66,31 @@ export default function TeacherSessionReview({ user }) {
             </button>
 
             <div style={{ backgroundColor: 'var(--surface)', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', marginBottom: '2rem' }}>
-                <h1 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-main)' }}>{session.name || session.quizTitle}</h1>
-                <div style={{ display: 'flex', gap: '1rem', color: 'var(--text-muted)' }}>
-                    <span>Mode: <strong style={{ textTransform: 'capitalize' }}>{session.mode}</strong></span>
-                    <span>•</span>
-                    <span>Status: <strong style={{ textTransform: 'capitalize' }}>{session.status}</strong></span>
-                    {session.is_archived === 1 && (
-                        <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                        <h1 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-main)' }}>{session.name || session.quizTitle}</h1>
+                        <div style={{ display: 'flex', gap: '1rem', color: 'var(--text-muted)' }}>
+                            <span>Mode: <strong style={{ textTransform: 'capitalize' }}>{session.mode}</strong></span>
                             <span>•</span>
-                            <span style={{ color: '#D97706', fontWeight: 600 }}>Archived</span>
-                        </>
-                    )}
+                            <span>Status: <strong style={{ textTransform: 'capitalize' }}>{session.status}</strong></span>
+                            {session.is_archived === 1 && (
+                                <>
+                                    <span>•</span>
+                                    <span style={{ color: '#D97706', fontWeight: 600 }}>Archived</span>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleDownloadCSV}
+                        style={{
+                            backgroundColor: 'white', color: 'var(--primary)', border: '1px solid var(--primary)',
+                            padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                            fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem'
+                        }}
+                    >
+                        Download CSV
+                    </button>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.5rem', padding: '1rem', backgroundColor: 'var(--background)', borderRadius: 'var(--radius-md)' }}>
