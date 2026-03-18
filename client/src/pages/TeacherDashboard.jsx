@@ -65,7 +65,12 @@ export default function TeacherDashboard({ user }) {
             if (category && category !== 'All') {
                 url += `&category=${encodeURIComponent(category)}`;
             }
-            const res = await fetch(url);
+            const res = await fetch(url, {
+                headers: {
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                }
+            });
             if (res.ok) {
                 const data = await res.json();
                 setQuizzes(Array.isArray(data) ? data : []);
@@ -81,7 +86,12 @@ export default function TeacherDashboard({ user }) {
             if (category && category !== 'All') {
                 url += `?category=${encodeURIComponent(category)}`;
             }
-            const res = await fetch(url);
+            const res = await fetch(url, {
+                headers: {
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                }
+            });
             if (res.ok) {
                 const data = await res.json();
                 setCommunityQuizzes(Array.isArray(data) ? data : []);
@@ -93,7 +103,12 @@ export default function TeacherDashboard({ user }) {
 
     const fetchSessions = async () => {
         try {
-            const res = await fetch(`/api/sessions/teacher/${user.id}`);
+            const res = await fetch(`/api/sessions/teacher/${user.id}`, {
+                headers: {
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                }
+            });
             if (res.ok) {
                 const data = await res.json();
                 setSessions(Array.isArray(data) ? data : []);
@@ -105,7 +120,12 @@ export default function TeacherDashboard({ user }) {
 
     const fetchClasses = async () => {
         try {
-            const res = await fetch(`/api/classes?teacherId=${user.id}`);
+            const res = await fetch(`/api/classes?teacherId=${user.id}`, {
+                headers: {
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                }
+            });
             if (res.ok) {
                 const data = await res.json();
                 setClasses(Array.isArray(data) ? data : []);
@@ -120,7 +140,11 @@ export default function TeacherDashboard({ user }) {
         try {
             const res = await fetch('/api/classes', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                },
                 body: JSON.stringify({ name: newClassName, teacherId: user.id })
             });
             if (res.ok) {
@@ -134,7 +158,12 @@ export default function TeacherDashboard({ user }) {
 
     const fetchClassStudents = async (classId) => {
         try {
-            const res = await fetch(`/api/classes/${classId}/students`);
+            const res = await fetch(`/api/classes/${classId}/students`, {
+                headers: {
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                }
+            });
             const data = await res.json();
             setClassStudents(data);
         } catch (e) {
@@ -157,7 +186,12 @@ export default function TeacherDashboard({ user }) {
                 return;
             }
             try {
-                const res = await fetch(`/api/students/search?q=${encodeURIComponent(studentSearchQuery)}`);
+                const res = await fetch(`/api/students/search?q=${encodeURIComponent(studentSearchQuery)}`, {
+                    headers: { 
+                        'x-user-id': user.id,
+                        'x-user-role': user.role 
+                    }
+                });
                 const data = await res.json();
                 setStudentSearchResults(data);
             } catch (e) {
@@ -177,7 +211,11 @@ export default function TeacherDashboard({ user }) {
         try {
             const res = await fetch(`/api/classes/${selectedClassRaw.id}/students`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                },
                 body: JSON.stringify({ studentId })
             });
             const data = await res.json();
@@ -196,7 +234,11 @@ export default function TeacherDashboard({ user }) {
         if (!selectedClassRaw) return;
         try {
             await fetch(`/api/classes/${selectedClassRaw.id}/students/${studentId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                }
             });
             fetchClassStudents(selectedClassRaw.id);
             fetchClasses(); // Update count
@@ -207,7 +249,12 @@ export default function TeacherDashboard({ user }) {
 
     const handleEditClick = async (quiz) => {
         try {
-            const res = await fetch(`/api/quizzes/${quiz.id}`);
+            const res = await fetch(`/api/quizzes/${quiz.id}`, {
+                headers: {
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                }
+            });
             if (res.ok) {
                 const data = await res.json();
                 setTitle(quiz.title);
@@ -240,7 +287,11 @@ export default function TeacherDashboard({ user }) {
 
             const res = await fetch(endpoint, {
                 method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                },
                 body: JSON.stringify({
                     title,
                     description,
@@ -448,7 +499,11 @@ export default function TeacherDashboard({ user }) {
         try {
             const res = await fetch('/api/sessions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                },
                 body: JSON.stringify({
                     quiz_id: quizId,
                     mode: sessionMode,
@@ -477,7 +532,11 @@ export default function TeacherDashboard({ user }) {
         try {
             const res = await fetch(`/api/quizzes/${quizId}/share`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                },
                 body: JSON.stringify({ isShared: !currentStatus })
             });
             if (res.ok) {
@@ -493,7 +552,11 @@ export default function TeacherDashboard({ user }) {
         try {
             const res = await fetch(`/api/quizzes/${quizId}/copy`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                },
                 body: JSON.stringify({ newAuthorId: user.id })
             });
             if (res.ok) {
@@ -507,7 +570,13 @@ export default function TeacherDashboard({ user }) {
 
     const archiveSession = async (sessionId) => {
         try {
-            const res = await fetch(`/api/sessions/${sessionId}/archive`, { method: 'PUT' });
+            const res = await fetch(`/api/sessions/${sessionId}/archive`, { 
+                method: 'PUT',
+                headers: {
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                }
+            });
             if (res.ok) fetchSessions();
         } catch (e) {
             console.error(e);
@@ -516,7 +585,13 @@ export default function TeacherDashboard({ user }) {
 
     const handleDeleteQuiz = async (quizId) => {
         try {
-            const res = await fetch(`/api/quizzes/${quizId}`, { method: 'DELETE' });
+            const res = await fetch(`/api/quizzes/${quizId}`, { 
+                method: 'DELETE',
+                headers: {
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                }
+            });
             if (res.ok) {
                 fetchQuizzes();
                 fetchCommunityQuizzes();

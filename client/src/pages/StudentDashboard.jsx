@@ -24,7 +24,12 @@ export default function StudentDashboard({ user }) {
 
     const fetchSessions = async (isAutoRefresh = false) => {
         try {
-            const res = await fetch(`/api/sessions/student/${user.id}`);
+            const res = await fetch(`/api/sessions/student/${user.id}`, {
+                headers: {
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                }
+            });
             if (res.ok) {
                 const data = await res.json();
                 setSessions(data);
@@ -70,7 +75,11 @@ export default function StudentDashboard({ user }) {
         try {
             const res = await fetch(`/api/users/${user.id}/password`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                },
                 body: JSON.stringify({ newPassword })
             });
             if (res.ok) {

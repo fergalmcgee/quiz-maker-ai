@@ -59,19 +59,35 @@ export default function TeacherPresenter() {
     useEffect(() => {
         // 1. Fetch Session and Quiz info
         const loadData = async () => {
+            const user = JSON.parse(localStorage.getItem('quiz_user') || '{}');
             try {
-                const sessRes = await fetch(`/api/sessions/${sessionId}`);
+                const sessRes = await fetch(`/api/sessions/${sessionId}`, {
+                    headers: {
+                        'x-user-id': user.id,
+                        'x-user-role': user.role
+                    }
+                });
                 if (!sessRes.ok) throw new Error('Session not found');
                 const sessData = await sessRes.json();
                 setSession(sessData);
 
-                const quizRes = await fetch(`/api/quizzes/${sessData.quiz_id}`);
+                const quizRes = await fetch(`/api/quizzes/${sessData.quiz_id}`, {
+                    headers: {
+                        'x-user-id': user.id,
+                        'x-user-role': user.role
+                    }
+                });
                 const quizData = await quizRes.json();
                 setQuiz(quizData);
 
                 if (sessData.class_id) {
                     try {
-                        const classRes = await fetch(`/api/classes/${sessData.class_id}/students`);
+                        const classRes = await fetch(`/api/classes/${sessData.class_id}/students`, {
+                            headers: {
+                                'x-user-id': user.id,
+                                'x-user-role': user.role
+                            }
+                        });
                         if (classRes.ok) {
                             const classData = await classRes.json();
                             setClassStudents(classData);
@@ -173,8 +189,15 @@ export default function TeacherPresenter() {
         } else {
             // Quiz finished (or forced closed for async)
             try {
+                const user = JSON.parse(localStorage.getItem('quiz_user') || '{}');
                 // Tell server to mark session as complete
-                await fetch(`/api/sessions/${sessionId}/finish`, { method: 'PUT' });
+                await fetch(`/api/sessions/${sessionId}/finish`, { 
+                    method: 'PUT',
+                    headers: {
+                        'x-user-id': user.id,
+                        'x-user-role': user.role
+                    }
+                });
                 // Broadcast to students that it's over
                 socket.emit('finish_session', { sessionId });
                 toast.success("Session Closed!");

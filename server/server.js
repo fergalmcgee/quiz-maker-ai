@@ -23,7 +23,7 @@ app.use((req, res, next) => {
     next();
 });
 
-import apiRoutes from './api.js';
+import apiRoutes, { authorize } from './api.js';
 app.use('/api', apiRoutes);
 
 const server = http.createServer(app);
@@ -47,8 +47,8 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', time: new Date() });
 });
 
-// Get all sessions
-app.get('/api/sessions', async (req, res) => {
+// Get all sessions (Admin only)
+app.get('/api/sessions', authorize(['admin']), async (req, res) => {
     try {
         const sessions = await queryDb.all('SELECT * FROM sessions ORDER BY id DESC');
         res.json(sessions);
@@ -58,8 +58,16 @@ app.get('/api/sessions', async (req, res) => {
 });
 
 // Get sessions for a specific teacher's quizzes
-app.get('/api/sessions/teacher/:teacherId', async (req, res) => {
+app.get('/api/sessions/teacher/:teacherId', authorize(['admin', 'teacher']), async (req, res) => {
     try {
+        const userId = req.headers['x-user-id'];
+        const userRole = req.headers['x-user-role'];
+
+        // Teachers can only see their own sessions
+        if (userRole === 'teacher' && userId !== req.params.teacherId) {
+            return res.status(403).json({ error: 'Forbidden: You can only view your own sessions' });
+        }
+
         const sessions = await queryDb.all(`
             SELECT s.*, q.title as quiz_title, c.name as class_name, s.created_at
             FROM sessions s
@@ -75,8 +83,16 @@ app.get('/api/sessions/teacher/:teacherId', async (req, res) => {
 });
 
 // Get active sessions for a specific student (filtered by their enrolled classes)
-app.get('/api/sessions/student/:studentId', async (req, res) => {
+app.get('/api/sessions/student/:studentId', authorize(['admin', 'teacher', 'student']), async (req, res) => {
     try {
+        const userId = req.headers['x-user-id'];
+        const userRole = req.headers['x-user-role'];
+
+        // Students can only see their own sessions
+        if (userRole === 'student' && userId !== req.params.studentId) {
+            return res.status(403).json({ error: 'Forbidden: You can only view your own sessions' });
+        }
+
         const sql = `
             SELECT s.*, q.title as quiz_title, c.name as class_name, t.username as teacher_name, 
                    CASE WHEN sub.student_id IS NOT NULL THEN 1 ELSE 0 END as is_submitted,
@@ -120,7 +136,7 @@ function generateJoinCode() {
 }
 
 // Create a new valid session in DB before joining via socket
-app.post('/api/sessions', async (req, res) => {
+app.post('/api/sessions', authorize(['admin', 'teacher']), async (req, res) => {
     const { quiz_id, mode, name, class_id, time_limit, randomize_questions, shuffle_options, is_team_mode } = req.body;
     console.log(`--- Creating Session: "${name}" (Quiz: ${quiz_id}, Class: ${class_id}) ---`);
     try {
@@ -162,7 +178,7 @@ app.get('/api/sessions/join/:code', async (req, res) => {
 });
 
 // Finish a session
-app.put('/api/sessions/:id/finish', async (req, res) => {
+app.put('/api/sessions/:id/finish', authorize(['admin', 'teacher']), async (req, res) => {
     try {
         await queryDb.run('UPDATE sessions SET status = "completed" WHERE id = ?', [req.params.id]);
         res.json({ message: 'Session completed successfully' });
@@ -246,7 +262,7 @@ app.post('/api/sessions/:id/submit', async (req, res) => {
 });
 
 // Archive a session (instead of fully deleting)
-app.put('/api/sessions/:id/archive', async (req, res) => {
+app.put('/api/sessions/:id/archive', authorize(['admin', 'teacher']), async (req, res) => {
     try {
         await queryDb.run('UPDATE sessions SET is_archived = 1 WHERE id = ?', [req.params.id]);
         res.json({ message: 'Session archived successfully' });
@@ -256,8 +272,15 @@ app.put('/api/sessions/:id/archive', async (req, res) => {
 });
 
 // Get student's review results for a session
-app.get('/api/sessions/:id/results/:studentId', async (req, res) => {
+app.get('/api/sessions/:id/results/:studentId', authorize(['admin', 'teacher', 'student']), async (req, res) => {
     try {
+        const userId = req.headers['x-user-id'];
+        const userRole = req.headers['x-user-role'];
+
+        // Students can only see their own results
+        if (userRole === 'student' && userId !== req.params.studentId) {
+            return res.status(403).json({ error: 'Forbidden: You can only view your own results' });
+        }
         const session = await queryDb.get('SELECT quiz_id FROM sessions WHERE id = ?', [req.params.id]);
         if (!session) return res.status(404).json({ error: 'Session not found' });
 
@@ -321,7 +344,7 @@ app.get('/api/sessions/:id/results/:studentId', async (req, res) => {
 });
 
 // Get aggregated session results for the teacher
-app.get('/api/sessions/:id/teacher-results', async (req, res) => {
+app.get('/api/sessions/:id/teacher-results', authorize(['admin', 'teacher']), async (req, res) => {
     try {
         const session = await queryDb.get('SELECT * FROM sessions WHERE id = ?', [req.params.id]);
         if (!session) return res.status(404).json({ error: 'Session not found' });

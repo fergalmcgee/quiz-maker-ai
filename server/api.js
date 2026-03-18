@@ -1,40 +1,65 @@
 import express from 'express';
+import bcrypt from 'bcryptjs';
 import { queryDb } from './database.js';
 
 const router = express.Router();
 
+// --- Middleware ---
+
+// Simple Authorization Middleware
+export const authorize = (roles = []) => {
+    return (req, res, next) => {
+        const userRole = req.headers['x-user-role'];
+        if (!userRole) return res.status(401).json({ error: 'Unauthorized' });
+        
+        if (roles.length && !roles.includes(userRole)) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+        next();
+    };
+};
+
 // --- Authentication & Users ---
 
-// Login (Simple auth for this local app)
+// Login (Simple auth with bcrypt)
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
     try {
         const user = await queryDb.get(
-            'SELECT id, username, role, is_approved FROM users WHERE username = ? AND password_hash = ?',
-            [username, password]
+            'SELECT * FROM users WHERE username = ?',
+            [username]
         );
         if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+
+        const isMatch = await bcrypt.compare(password, user.password_hash);
+        if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
 
         if (user.role === 'teacher' && user.is_approved === 0) {
             return res.status(403).json({ error: 'Your account is pending admin approval' });
         }
 
-        res.json({ message: 'Login successful', user });
+        // Remove sensitive data before sending
+        const { password_hash, ...safeUser } = user;
+        res.json({ message: 'Login successful', user: safeUser });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Create User (Teacher sets up accounts, Admin sets up students)
-router.post('/users', async (req, res) => {
+// Create User (Admin creates teachers, Teacher creates students)
+router.post('/users', authorize(['admin', 'teacher']), async (req, res) => {
     const { username, password, role, form_class, createdBy } = req.body;
     try {
+        // Hash the password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password || 'password', salt);
+
         // Teachers are pending (0) by default, students are approved (1) automatically
         const isApproved = role === 'teacher' ? 0 : 1;
 
         const result = await queryDb.run(
             'INSERT INTO users (username, password_hash, role, created_by, is_approved, form_class) VALUES (?, ?, ?, ?, ?, ?)',
-            [username, password, role, createdBy || null, isApproved, form_class || null]
+            [username, hashedPassword, role, createdBy || null, isApproved, form_class || null]
         );
         res.json({ id: result.id, username, role, form_class });
     } catch (error) {
@@ -61,7 +86,7 @@ router.get('/students', async (req, res) => {
 
 // Bulk Import Students
 // Expected Format: Name, Form Class
-router.post('/students/import', async (req, res) => {
+router.post('/students/import', authorize(['admin', 'teacher']), async (req, res) => {
     const { bulkText, createdBy } = req.body;
     try {
         const lines = bulkText.replace(/\r\n/g, '\n').split('\n').map(l => l.trim()).filter(l => l.length > 0);
@@ -95,7 +120,7 @@ router.post('/students/import', async (req, res) => {
 });
 
 // Search school-wide students
-router.get('/students/search', async (req, res) => {
+router.get('/students/search', authorize(['admin', 'teacher']), async (req, res) => {
     const { q } = req.query;
     if (!q || q.length < 2) return res.json([]);
 
@@ -243,6 +268,7 @@ router.get('/quizzes/community/:excludeAuthorId', async (req, res) => {
 
 // Get single quiz with questions and options
 router.get('/quizzes/:id', async (req, res) => {
+    const { studentView } = req.query;
     try {
         const quiz = await queryDb.get('SELECT * FROM quizzes WHERE id = ?', [req.params.id]);
         if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
@@ -250,8 +276,23 @@ router.get('/quizzes/:id', async (req, res) => {
         const questionsRows = await queryDb.all('SELECT * FROM questions WHERE quiz_id = ?', [quiz.id]);
         const questions = [];
         for (const q of questionsRows) {
+            // If studentView is true, we strip the explanation
+            if (studentView === 'true') {
+                delete q.explanation;
+            }
+
             const options = await queryDb.all('SELECT id, text, is_correct FROM options WHERE question_id = ?', [q.id]);
-            questions.push({ ...q, options });
+            
+            // If studentView is true, we strip the is_correct flag
+            const sanitizedOptions = options.map(opt => {
+                if (studentView === 'true') {
+                    const { is_correct, ...rest } = opt;
+                    return rest;
+                }
+                return opt;
+            });
+
+            questions.push({ ...q, options: sanitizedOptions });
         }
         res.json({ ...quiz, questions });
     } catch (error) {
@@ -702,8 +743,8 @@ router.post('/quizzes/:id/copy', async (req, res) => {
 
 // --- Admin Controls ---
 
-// Get all users
-router.get('/admin/users', async (req, res) => {
+// Get all users (Sanitized)
+router.get('/admin/users', authorize(['admin']), async (req, res) => {
     try {
         const users = await queryDb.all(`
             SELECT u.id, u.username, u.role, u.is_approved, u.created_at, u.form_class, creator.username as creator_name
@@ -718,7 +759,7 @@ router.get('/admin/users', async (req, res) => {
 });
 
 // Approve a teacher
-router.put('/admin/users/:id/approve', async (req, res) => {
+router.put('/admin/users/:id/approve', authorize(['admin']), async (req, res) => {
     try {
         await queryDb.run('UPDATE users SET is_approved = 1 WHERE id = ?', [req.params.id]);
         res.json({ message: 'User approved successfully' });
@@ -727,20 +768,22 @@ router.put('/admin/users/:id/approve', async (req, res) => {
     }
 });
 
-// Reset password
-router.put('/admin/users/:id/password', async (req, res) => {
+// Reset password (Admin)
+router.put('/admin/users/:id/password', authorize(['admin']), async (req, res) => {
     const { newPassword } = req.body;
     if (!newPassword) return res.status(400).json({ error: 'New password is required' });
     try {
-        await queryDb.run('UPDATE users SET password_hash = ? WHERE id = ?', [newPassword, req.params.id]);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        await queryDb.run('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, req.params.id]);
         res.json({ message: 'Password updated successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Delete a user (Cascades to their students/quizzes depending on schema)
-router.delete('/admin/users/:id', async (req, res) => {
+// Delete a user
+router.delete('/admin/users/:id', authorize(['admin']), async (req, res) => {
     try {
         await queryDb.run('DELETE FROM users WHERE id = ?', [req.params.id]);
         res.json({ message: 'User deleted successfully' });
@@ -754,7 +797,9 @@ router.put('/users/:id/password', async (req, res) => {
     const { newPassword } = req.body;
     if (!newPassword) return res.status(400).json({ error: 'New password is required' });
     try {
-        await queryDb.run('UPDATE users SET password_hash = ? WHERE id = ?', [newPassword, req.params.id]);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        await queryDb.run('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, req.params.id]);
         res.json({ message: 'Password updated successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });

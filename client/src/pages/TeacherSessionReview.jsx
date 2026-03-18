@@ -11,7 +11,12 @@ export default function TeacherSessionReview({ user }) {
     useEffect(() => {
         const fetchResults = async () => {
             try {
-                const res = await fetch(`/api/sessions/${sessionId}/teacher-results`);
+                const res = await fetch(`/api/sessions/${sessionId}/teacher-results`, {
+                    headers: {
+                        'x-user-id': user.id,
+                        'x-user-role': user.role
+                    }
+                });
                 if (res.ok) {
                     const data = await res.json();
                     setResults(data);
@@ -34,7 +39,12 @@ export default function TeacherSessionReview({ user }) {
 
     const handleDownloadCSV = async () => {
         try {
-            const res = await fetch(`/api/sessions/${sessionId}/export`);
+            const res = await fetch(`/api/sessions/${sessionId}/export`, {
+                headers: {
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                }
+            });
             if (!res.ok) throw new Error('Failed to generate CSV');
 
             const blob = await res.blob();

@@ -60,3 +60,35 @@ If students on the network cannot access the IP address, you may need to open po
 2. Create a **New Inbound Rule**.
 3. Select **Port** -> **TCP** -> Specific local ports: `3001`.
 4. Allow the connection -> Apply to Domain/Private/Public -> Name it "QuizMaker Server".
+
+## 7. How to Update (Without Losing Data)
+When you want to push new security updates or features to your Windows Server, follow these steps to ensure your students and quizzes remain safe:
+
+### 1. Backup your Database (CRITICAL)
+Before doing anything else, go to your project folder on the Windows Server (e.g., `C:\Projects\QuizMaker\server`) and **copy** the file named `quizmaker.db`.
+- Paste it in a safe "Backups" folder.
+- Rename it with the date (e.g., `quizmaker_backup_2026_03_18.db`).
+- **This file contains all your data.** Even if you delete everything else, keeping this file safe means you've kept your progress.
+
+### 2. Get the New Code
+- **If using Git**: Run `git pull` from the main `QuizMaker` folder.
+- **If copying manually**: Copy the new project files from your Mac to the Windows Server, but **DO NOT** overwrite the `quizmaker.db` file in the `server/` folder if it asks.
+
+### 3. Rebuild the Frontend
+On your Mac (where you have the full development environment):
+1. Go to `QuizMaker/client` and run `npm run build`.
+2. Copy the newly generated `dist` folder to the Windows Server, replacing the old `C:\Projects\QuizMaker\client\dist`.
+
+### 4. Refresh Dependencies
+On the Windows Server, go to `C:\Projects\QuizMaker\server` and run:
+```cmd
+npm install
+```
+
+### 5. Restart the Server
+Close the old command prompt window and start the server again:
+```cmd
+node server.js
+```
+
+Your server will now be running the latest version with all your previous data intact!

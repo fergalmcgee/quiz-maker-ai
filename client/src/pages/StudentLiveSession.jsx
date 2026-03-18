@@ -64,7 +64,12 @@ export default function StudentLiveSession({ user }) {
     useEffect(() => {
         const loadData = async () => {
             try {
-                const sessRes = await fetch(`/api/sessions/${sessionId}`);
+                const sessRes = await fetch(`/api/sessions/${sessionId}`, {
+                    headers: {
+                        'x-user-id': user.id,
+                        'x-user-role': user.role
+                    }
+                });
                 if (!sessRes.ok) throw new Error('Session not found');
                 const sessData = await sessRes.json();
                 setSession(sessData);
@@ -75,7 +80,12 @@ export default function StudentLiveSession({ user }) {
                     fetchResults(sessData.id);
                 } else {
                     // Check if already submitted
-                    const subRes = await fetch(`/api/sessions/${sessData.id}/submission/${user.id}`);
+                    const subRes = await fetch(`/api/sessions/${sessData.id}/submission/${user.id}`, {
+                        headers: {
+                            'x-user-id': user.id,
+                            'x-user-role': user.role
+                        }
+                    });
                     const subData = await subRes.json();
                     if (subData.isSubmitted) {
                         setIsSubmitted(true);
@@ -84,8 +94,12 @@ export default function StudentLiveSession({ user }) {
                             fetchResults(sessData.id);
                         }
                     } else {
-                        const quizRes = await fetch(`/api/quizzes/${sessData.quiz_id}`);
-                        const quizData = await quizRes.json();
+                        const quizRes = await fetch(`/api/quizzes/${sessData.quiz_id}?studentView=true`, {
+                            headers: {
+                                'x-user-id': user.id,
+                                'x-user-role': user.role
+                            }
+                        });
 
                         // Intercept and shuffle questions if randomize flag is true and mode is async
                         if (sessData.mode === 'async' && sessData.randomize_questions === 1) {
@@ -134,7 +148,11 @@ export default function StudentLiveSession({ user }) {
                         if (sessData.mode === 'async') {
                             const startRes = await fetch(`/api/sessions/${sessData.id}/start`, {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'x-user-id': user.id,
+                                    'x-user-role': user.role
+                                },
                                 body: JSON.stringify({ studentId: user.id })
                             });
                             const timerData = await startRes.json();
@@ -284,7 +302,12 @@ export default function StudentLiveSession({ user }) {
 
     const fetchResults = async (sid) => {
         try {
-            const res = await fetch(`/api/sessions/${sid}/results/${user.id}`);
+            const res = await fetch(`/api/sessions/${sid}/results/${user.id}`, {
+                headers: {
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                }
+            });
             const data = await res.json();
             setReviewResults(data.results);
             setTotalPoints(data.totalPoints || 0);
@@ -331,7 +354,11 @@ export default function StudentLiveSession({ user }) {
         try {
             await fetch(`/api/sessions/${sessionId}/submit`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-user-id': user.id,
+                    'x-user-role': user.role
+                },
                 body: JSON.stringify({ studentId: user.id })
             });
             setIsSubmitted(true);

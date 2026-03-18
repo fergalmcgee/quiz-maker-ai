@@ -28,7 +28,12 @@ export default function AdminDashboard({ user }) {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const res = await fetch('/api/admin/users');
+            const res = await fetch('/api/admin/users', {
+                headers: { 
+                    'x-user-role': user.role,
+                    'x-user-id': user.id
+                }
+            });
             if (!res.ok) throw new Error('Failed to fetch users');
             const data = await res.json();
             setUsers(data);
@@ -42,7 +47,11 @@ export default function AdminDashboard({ user }) {
     const handleApprove = async (id) => {
         try {
             const res = await fetch(`/api/admin/users/${id}/approve`, {
-                method: 'PUT'
+                method: 'PUT',
+                headers: { 
+                    'x-user-role': user.role,
+                    'x-user-id': user.id
+                }
             });
             if (!res.ok) throw new Error('Failed to approve user');
             fetchUsers();
@@ -55,7 +64,11 @@ export default function AdminDashboard({ user }) {
     const handleDelete = async (id) => {
         try {
             const res = await fetch(`/api/admin/users/${id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: { 
+                    'x-user-role': user.role,
+                    'x-user-id': user.id
+                }
             });
             if (!res.ok) throw new Error('Failed to delete user');
             fetchUsers();
@@ -72,7 +85,11 @@ export default function AdminDashboard({ user }) {
         try {
             const res = await fetch(`/api/admin/users/${id}/password`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-user-role': user.role,
+                    'x-user-id': user.id
+                },
                 body: JSON.stringify({ newPassword: newPasswordValue })
             });
             if (!res.ok) throw new Error('Failed to reset password');
@@ -89,7 +106,11 @@ export default function AdminDashboard({ user }) {
         try {
             const res = await fetch('/api/users', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-user-role': user.role,
+                    'x-user-id': user.id
+                },
                 body: JSON.stringify({
                     username: newUsername,
                     password: newPassword,
@@ -121,7 +142,11 @@ export default function AdminDashboard({ user }) {
         try {
             const res = await fetch('/api/students/import', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-user-role': user.role,
+                    'x-user-id': user.id
+                },
                 body: JSON.stringify({ bulkText, createdBy: user.id })
             });
             if (res.ok) {
