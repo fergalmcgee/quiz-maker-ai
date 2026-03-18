@@ -79,11 +79,13 @@ On your Mac (where you have the full development environment):
 1. Go to `QuizMaker/client` and run `npm run build`.
 2. Copy the newly generated `dist` folder to the Windows Server, replacing the old `C:\Projects\QuizMaker\client\dist`.
 
-### 4. Refresh Dependencies
+### 4. Refresh Dependencies & Migrate Passwords
 On the Windows Server, go to `C:\Projects\QuizMaker\server` and run:
 ```cmd
 npm install
+node migrate_windows.js
 ```
+*The second command securely hashes your existing passwords so the new security features can work.*
 
 ### 5. Restart the Server
 Close the old command prompt window and start the server again:

@@ -90,7 +90,9 @@ router.post('/students/import', authorize(['admin', 'teacher']), async (req, res
     const { bulkText, createdBy } = req.body;
     try {
         const lines = bulkText.replace(/\r\n/g, '\n').split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        let studentsImported = 0;
+        // Pre-hash the default password once to save time
+        const salt = await bcrypt.genSalt(10);
+        const defaultHashedPassword = await bcrypt.hash('password', salt);
 
         for (const line of lines) {
             const parts = line.split(',');
@@ -101,7 +103,7 @@ router.post('/students/import', authorize(['admin', 'teacher']), async (req, res
                 try {
                     await queryDb.run(
                         'INSERT INTO users (username, password_hash, role, created_by, is_approved, form_class) VALUES (?, ?, ?, ?, ?, ?)',
-                        [username, 'password', 'student', createdBy || null, 1, form_class]
+                        [username, defaultHashedPassword, 'student', createdBy || null, 1, form_class]
                     );
                     studentsImported++;
                 } catch (e) {
