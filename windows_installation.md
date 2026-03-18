@@ -72,7 +72,12 @@ Before doing anything else, go to your project folder on the Windows Server (e.g
 
 ### 2. Get the New Code
 - **If using Git**: Run `git pull` from the main `QuizMaker` folder.
-- **If copying manually**: Copy the new project files from your Mac to the Windows Server, but **DO NOT** overwrite the `quizmaker.db` file in the `server/` folder if it asks.
+- **If copying manually**: Copy these key files from your Mac to the Windows Server:
+    *   **`server/api.js`** and **`server/server.js`** (Security & Logic)
+    *   **`server/database.js`** (CRITICAL: This runs any necessary database "upgrades")
+    *   **`server/package.json`** (Ensures all new "ingredients" are installed)
+    *   **`client/dist`** folder (Replaces the old website interface)
+- **DO NOT** overwrite the `quizmaker.db` file in the `server/` folder if it asks.
 
 ### 3. Rebuild the Frontend
 On your Mac (where you have the full development environment):

@@ -366,7 +366,7 @@ router.get('/quizzes/:id/export', async (req, res) => {
 });
 
 // Edit Quiz (Structured JSON Versioning)
-router.put('/quizzes/:id/structure', async (req, res) => {
+router.put('/quizzes/:id/structure', authorize(['admin', 'teacher']), async (req, res) => {
     const { title, description, category, questions } = req.body;
     const oldQuizId = req.params.id;
 
@@ -412,7 +412,7 @@ router.put('/quizzes/:id/structure', async (req, res) => {
 });
 
 // Edit Quiz (Immutable Versioning)
-router.put('/quizzes/:id', async (req, res) => {
+router.put('/quizzes/:id', authorize(['admin', 'teacher']), async (req, res) => {
     const { title, description, category, bulkText } = req.body;
     const oldQuizId = req.params.id;
 
@@ -529,7 +529,7 @@ router.put('/quizzes/:id', async (req, res) => {
 // Create Quiz (Structured JSON)
 // JSON format expected:
 // { title, description, category, authorId, questions: [{ text, type, image_url, code_snippet, code_language, options: [{text, isCorrect}] }] }
-router.post('/quizzes/builder', async (req, res) => {
+router.post('/quizzes/builder', authorize(['admin', 'teacher']), async (req, res) => {
     const { title, description, category, authorId, questions } = req.body;
     try {
         // 1. Create Quiz
@@ -571,7 +571,7 @@ router.post('/quizzes/builder', async (req, res) => {
 // A) Option
 // *B) Correct Option
 // C) Option
-router.post('/quizzes/import', async (req, res) => {
+router.post('/quizzes/import', authorize(['admin', 'teacher']), async (req, res) => {
     const { title, description, category, bulkText, authorId } = req.body;
     try {
         // 1. Create Quiz
