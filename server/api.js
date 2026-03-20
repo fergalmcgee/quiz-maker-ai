@@ -3,6 +3,33 @@ import bcrypt from 'bcryptjs';
 import { queryDb } from './database.js';
 
 const router = express.Router();
+const BCRYPT_PREFIXES = ['$2a$', '$2b$', '$2y$'];
+
+function isBcryptHash(value) {
+    return typeof value === 'string' && BCRYPT_PREFIXES.some(prefix => value.startsWith(prefix));
+}
+
+async function hashPassword(password) {
+    const salt = await bcrypt.genSalt(10);
+    return bcrypt.hash(password, salt);
+}
+
+async function verifyAndUpgradePassword(user, password) {
+    if (!user?.password_hash) return false;
+
+    if (isBcryptHash(user.password_hash)) {
+        return bcrypt.compare(password, user.password_hash);
+    }
+
+    if (password !== user.password_hash) {
+        return false;
+    }
+
+    const hashedPassword = await hashPassword(password);
+    await queryDb.run('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, user.id]);
+    user.password_hash = hashedPassword;
+    return true;
+}
 
 // --- Middleware ---
 
@@ -26,12 +53,14 @@ router.post('/login', async (req, res) => {
     const { username, password } = req.body;
     try {
         const user = await queryDb.get(
-            'SELECT * FROM users WHERE username = ?',
+            `SELECT id, username, password_hash, role, is_approved, created_by, form_class, created_at
+             FROM users
+             WHERE username = ?`,
             [username]
         );
         if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
-        const isMatch = await bcrypt.compare(password, user.password_hash);
+        const isMatch = await verifyAndUpgradePassword(user, password);
         if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
 
         if (user.role === 'teacher' && user.is_approved === 0) {
@@ -50,9 +79,7 @@ router.post('/login', async (req, res) => {
 router.post('/users', authorize(['admin', 'teacher']), async (req, res) => {
     const { username, password, role, form_class, createdBy } = req.body;
     try {
-        // Hash the password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password || 'password', salt);
+        const hashedPassword = await hashPassword(password || 'password');
 
         // Teachers are pending (0) by default, students are approved (1) automatically
         const isApproved = role === 'teacher' ? 0 : 1;
@@ -90,9 +117,9 @@ router.post('/students/import', authorize(['admin', 'teacher']), async (req, res
     const { bulkText, createdBy } = req.body;
     try {
         const lines = bulkText.replace(/\r\n/g, '\n').split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        // Pre-hash the default password once to save time
-        const salt = await bcrypt.genSalt(10);
-        const defaultHashedPassword = await bcrypt.hash('password', salt);
+        const defaultHashedPassword = await hashPassword('password');
+
+        let studentsImported = 0;
 
         for (const line of lines) {
             const parts = line.split(',');
@@ -775,8 +802,7 @@ router.put('/admin/users/:id/password', authorize(['admin']), async (req, res) =
     const { newPassword } = req.body;
     if (!newPassword) return res.status(400).json({ error: 'New password is required' });
     try {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        const hashedPassword = await hashPassword(newPassword);
         await queryDb.run('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, req.params.id]);
         res.json({ message: 'Password updated successfully' });
     } catch (error) {
@@ -799,8 +825,7 @@ router.put('/users/:id/password', async (req, res) => {
     const { newPassword } = req.body;
     if (!newPassword) return res.status(400).json({ error: 'New password is required' });
     try {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        const hashedPassword = await hashPassword(newPassword);
         await queryDb.run('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, req.params.id]);
         res.json({ message: 'Password updated successfully' });
     } catch (error) {

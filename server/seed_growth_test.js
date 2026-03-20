@@ -1,4 +1,5 @@
 import sqlite3 from 'sqlite3';
+import bcrypt from 'bcryptjs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -14,17 +15,18 @@ const db = new sqlite3.Database(dbPath, async (err) => {
 
     try {
         console.log("Seeding test growth data...");
+        const hashedPassword = await bcrypt.hash('pass', 10);
 
         // 1. Create a dummy class and teacher
-        const teacherRes = await run('INSERT INTO users (username, password_hash, role, is_approved) VALUES (?, ?, ?, ?)', ['Mr. Math', 'pass', 'teacher', 1]);
+        const teacherRes = await run('INSERT INTO users (username, password_hash, role, is_approved) VALUES (?, ?, ?, ?)', ['Mr. Math', hashedPassword, 'teacher', 1]);
         const teacherId = teacherRes.id;
 
         const classRes = await run('INSERT INTO classes (teacher_id, name) VALUES (?, ?)', [teacherId, 'Year 10 Advanced Math']);
         const classId = classRes.id;
 
         // 2. Create students
-        const s1Res = await run('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)', ['Alice Test', 'pass', 'student']);
-        const s2Res = await run('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)', ['Bob Test', 'pass', 'student']);
+        const s1Res = await run('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)', ['Alice Test', hashedPassword, 'student']);
+        const s2Res = await run('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)', ['Bob Test', hashedPassword, 'student']);
 
         await run('INSERT INTO class_students (class_id, student_id) VALUES (?, ?)', [classId, s1Res.id]);
         await run('INSERT INTO class_students (class_id, student_id) VALUES (?, ?)', [classId, s2Res.id]);

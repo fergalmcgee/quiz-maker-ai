@@ -100,6 +100,7 @@ export default function StudentLiveSession({ user }) {
                                 'x-user-role': user.role
                             }
                         });
+                        const quizData = await quizRes.json();
 
                         // Intercept and shuffle questions if randomize flag is true and mode is async
                         if (sessData.mode === 'async' && sessData.randomize_questions === 1) {
@@ -209,12 +210,8 @@ export default function StudentLiveSession({ user }) {
             if (state.teamScores) {
                 setTeamScores(state.teamScores);
             }
-            if (state.individualScores && state.individualScores[user.id]) {
-                setMyScore(state.individualScores[user.id]);
-            }
-            if (state.streaks && state.streaks[user.id]) {
-                setMyStreak(state.streaks[user.id]);
-            }
+            if (state.myScore !== undefined) setMyScore(state.myScore);
+            if (state.myStreak !== undefined) setMyStreak(state.myStreak);
         });
 
         newSocket.on('assigned_team', ({ team }) => {
@@ -225,10 +222,10 @@ export default function StudentLiveSession({ user }) {
             setTeamScores(teamScores);
         });
 
-        newSocket.on('student_score_update', ({ studentId, individualScores, streaks }) => {
+        newSocket.on('student_score_update', ({ studentId, myScore: nextScore, myStreak: nextStreak }) => {
             if (studentId === user.id) {
-                if (individualScores && individualScores[user.id] !== undefined) setMyScore(individualScores[user.id]);
-                if (streaks && streaks[user.id] !== undefined) setMyStreak(streaks[user.id]);
+                if (nextScore !== undefined) setMyScore(nextScore);
+                if (nextStreak !== undefined) setMyStreak(nextStreak);
             }
         });
 
