@@ -427,12 +427,100 @@ app.get('/api/sessions/:id/teacher-results', authorize(['admin', 'teacher']), as
 // Real-time Session State Management
 const activeSessions = {}; // Maps sessionId to its state
 
+function getSessionRoom(sessionId) {
+    return `session_${sessionId}`;
+}
+
+function getTeacherRoom(sessionId) {
+    return `session_${sessionId}_teachers`;
+}
+
+function getUserRoom(sessionId, userId) {
+    return `session_${sessionId}_user_${userId}`;
+}
+
+function buildAnsweredArrays(answeredStudents = {}) {
+    const answeredArrays = {};
+    for (const [questionId, studentSet] of Object.entries(answeredStudents)) {
+        answeredArrays[questionId] = Array.from(studentSet);
+    }
+    return answeredArrays;
+}
+
+function buildTeacherSessionState(sessionState) {
+    return {
+        currentQuestionIndex: sessionState.currentQuestionIndex,
+        results: sessionState.results,
+        answeredStudents: buildAnsweredArrays(sessionState.answeredStudents),
+        locked: sessionState.locked,
+        timerStart: sessionState.timerStart,
+        timerDuration: sessionState.timerDuration,
+        timerQuestionIndex: sessionState.timerQuestionIndex,
+        isTeamMode: sessionState.isTeamMode,
+        teamScores: sessionState.teamScores,
+        individualScores: sessionState.individualScores,
+        streaks: sessionState.streaks
+    };
+}
+
+function buildStudentSessionState(sessionState, userId) {
+    return {
+        currentQuestionIndex: sessionState.currentQuestionIndex,
+        locked: sessionState.locked,
+        timerStart: sessionState.timerStart,
+        timerDuration: sessionState.timerDuration,
+        timerQuestionIndex: sessionState.timerQuestionIndex,
+        isTeamMode: sessionState.isTeamMode,
+        teamScores: sessionState.isTeamMode ? sessionState.teamScores : null,
+        myScore: sessionState.individualScores[userId] || 0,
+        myStreak: sessionState.streaks[userId] || 0
+    };
+}
+
+function emitParticipantsUpdate(sessionId) {
+    const sessionState = activeSessions[sessionId];
+    if (!sessionState) return;
+
+    io.to(getTeacherRoom(sessionId)).emit('participants_update', {
+        count: sessionState.participants.size,
+        details: sessionState.participantDetails
+    });
+}
+
+function emitTeacherScoreUpdate(sessionId, studentId) {
+    const sessionState = activeSessions[sessionId];
+    if (!sessionState) return;
+
+    io.to(getTeacherRoom(sessionId)).emit('student_score_update', {
+        studentId,
+        individualScores: sessionState.individualScores,
+        streaks: sessionState.streaks
+    });
+}
+
+function emitStudentScoreUpdate(sessionId, studentId) {
+    const sessionState = activeSessions[sessionId];
+    if (!sessionState) return;
+
+    io.to(getUserRoom(sessionId, studentId)).emit('student_score_update', {
+        studentId,
+        myScore: sessionState.individualScores[studentId] || 0,
+        myStreak: sessionState.streaks[studentId] || 0
+    });
+}
+
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
     // Join a quiz session
     socket.on('join_session', async ({ sessionId, userId, username, role }) => {
-        socket.join(`session_${sessionId}`);
+        socket.join(getSessionRoom(sessionId));
+        if (role === 'teacher') {
+            socket.join(getTeacherRoom(sessionId));
+        }
+        if (userId !== undefined && userId !== null) {
+            socket.join(getUserRoom(sessionId, userId));
+        }
 
         // Initialize session state if not exists
         if (!activeSessions[sessionId]) {
@@ -482,38 +570,17 @@ io.on('connection', (socket) => {
                 activeSessions[sessionId].teams[userId] = randomTeam;
             }
 
-            // Notify teacher of participant count and newly updated details
-            io.to(`session_${sessionId}`).emit('participants_update', {
-                count: activeSessions[sessionId].participants.size,
-                details: activeSessions[sessionId].participantDetails,
-                teams: activeSessions[sessionId].teams
-            });
+            emitParticipantsUpdate(sessionId);
 
             // Send standard student joining state, including their team assignment
             socket.emit('assigned_team', { team: activeSessions[sessionId].teams[userId] });
         }
 
-        // Send current session state to the newly connected user
-        const answeredArrays = {};
-        if (activeSessions[sessionId].answeredStudents) {
-            for (const [qId, stuSet] of Object.entries(activeSessions[sessionId].answeredStudents)) {
-                answeredArrays[qId] = Array.from(stuSet);
-            }
+        if (role === 'teacher') {
+            socket.emit('session_state', buildTeacherSessionState(activeSessions[sessionId]));
+        } else {
+            socket.emit('session_state', buildStudentSessionState(activeSessions[sessionId], userId));
         }
-
-        socket.emit('session_state', {
-            currentQuestionIndex: activeSessions[sessionId].currentQuestionIndex,
-            results: activeSessions[sessionId].results,
-            answeredStudents: answeredArrays,
-            locked: activeSessions[sessionId].locked,
-            timerStart: activeSessions[sessionId].timerStart,
-            timerDuration: activeSessions[sessionId].timerDuration,
-            timerQuestionIndex: activeSessions[sessionId].timerQuestionIndex,
-            isTeamMode: activeSessions[sessionId].isTeamMode,
-            teamScores: activeSessions[sessionId].teamScores,
-            individualScores: activeSessions[sessionId].individualScores,
-            streaks: activeSessions[sessionId].streaks
-        });
     });
 
     // Teacher moves to next question
@@ -525,7 +592,7 @@ io.on('connection', (socket) => {
             activeSessions[sessionId].timerDuration = null;
             activeSessions[sessionId].questionStartTime = Date.now();
             activeSessions[sessionId].firstToAnswer = false;
-            io.to(`session_${sessionId}`).emit('question_changed', { newIndex });
+            io.to(getSessionRoom(sessionId)).emit('question_changed', { newIndex });
         }
     });
 
@@ -533,7 +600,7 @@ io.on('connection', (socket) => {
     socket.on('toggle_lock', ({ sessionId, locked }) => {
         if (activeSessions[sessionId]) {
             activeSessions[sessionId].locked = locked;
-            io.to(`session_${sessionId}`).emit('question_locked', { locked });
+            io.to(getSessionRoom(sessionId)).emit('question_locked', { locked });
         }
     });
 
@@ -543,7 +610,7 @@ io.on('connection', (socket) => {
             activeSessions[sessionId].timerStart = Date.now();
             activeSessions[sessionId].timerDuration = durationSeconds;
             activeSessions[sessionId].timerQuestionIndex = activeSessions[sessionId].currentQuestionIndex;
-            io.to(`session_${sessionId}`).emit('timer_started', {
+            io.to(getSessionRoom(sessionId)).emit('timer_started', {
                 duration: durationSeconds,
                 startedAt: activeSessions[sessionId].timerStart,
                 autoAdvance
@@ -593,7 +660,7 @@ io.on('connection', (socket) => {
                     }
                     activeSessions[sessionId].earnedBadges[studentId].add(badgeName);
 
-                    io.to(`session_${sessionId}`).emit('badge_earned', {
+                    io.to(getUserRoom(sessionId, studentId)).emit('badge_earned', {
                         studentId,
                         badge: badgeName,
                         streak: currentStreak
@@ -608,7 +675,7 @@ io.on('connection', (socket) => {
                     }
                     activeSessions[sessionId].earnedBadges[studentId].add(badgeName);
 
-                    io.to(`session_${sessionId}`).emit('badge_earned', {
+                    io.to(getUserRoom(sessionId, studentId)).emit('badge_earned', {
                         studentId,
                         badge: badgeName
                     });
@@ -640,29 +707,22 @@ io.on('connection', (socket) => {
                     const studentTeam = activeSessions[sessionId].teams[studentId];
                     if (studentTeam) {
                         activeSessions[sessionId].teamScores[studentTeam] += pointsEarned;
-                        io.to(`session_${sessionId}`).emit('team_scores_update', {
+                        io.to(getSessionRoom(sessionId)).emit('team_scores_update', {
                             teamScores: activeSessions[sessionId].teamScores
                         });
                     }
                 }
 
-                // Send a private update to the student with their new score/streak
-                io.to(`session_${sessionId}`).emit('student_score_update', {
-                    studentId,
-                    individualScores: activeSessions[sessionId].individualScores,
-                    streaks: activeSessions[sessionId].streaks
-                });
+                emitTeacherScoreUpdate(sessionId, studentId);
+                emitStudentScoreUpdate(sessionId, studentId);
             } else {
                 // Reset streak on wrong answer
                 activeSessions[sessionId].streaks[studentId] = 0;
-                io.to(`session_${sessionId}`).emit('student_score_update', {
-                    studentId,
-                    individualScores: activeSessions[sessionId].individualScores, // No change, but helpful to sync
-                    streaks: activeSessions[sessionId].streaks
-                });
+                emitTeacherScoreUpdate(sessionId, studentId);
+                emitStudentScoreUpdate(sessionId, studentId);
             }
 
-            io.to(`session_${sessionId}`).emit('results_update', {
+            io.to(getTeacherRoom(sessionId)).emit('results_update', {
                 questionId,
                 results: activeSessions[sessionId].results[questionId],
                 answered: Array.from(activeSessions[sessionId].answeredStudents[questionId])
@@ -737,7 +797,7 @@ io.on('connection', (socket) => {
                 const currentStreak = activeSessions[sessionId].streaks[studentId];
 
                 if (currentStreak >= 3) {
-                    io.to(`session_${sessionId}`).emit('badge_earned', {
+                    io.to(getUserRoom(sessionId, studentId)).emit('badge_earned', {
                         studentId,
                         badge: 'On Fire! 🔥',
                         streak: currentStreak
@@ -746,7 +806,7 @@ io.on('connection', (socket) => {
 
                 if (!activeSessions[sessionId].firstToAnswer) {
                     activeSessions[sessionId].firstToAnswer = true;
-                    io.to(`session_${sessionId}`).emit('badge_earned', {
+                    io.to(getUserRoom(sessionId, studentId)).emit('badge_earned', {
                         studentId,
                         badge: 'Quick Draw ⚡'
                     });
@@ -770,28 +830,22 @@ io.on('connection', (socket) => {
                     const studentTeam = activeSessions[sessionId].teams[studentId];
                     if (studentTeam) {
                         activeSessions[sessionId].teamScores[studentTeam] += pointsEarned;
-                        io.to(`session_${sessionId}`).emit('team_scores_update', {
+                        io.to(getSessionRoom(sessionId)).emit('team_scores_update', {
                             teamScores: activeSessions[sessionId].teamScores
                         });
                     }
                 }
 
-                io.to(`session_${sessionId}`).emit('student_score_update', {
-                    studentId,
-                    individualScores: activeSessions[sessionId].individualScores,
-                    streaks: activeSessions[sessionId].streaks
-                });
+                emitTeacherScoreUpdate(sessionId, studentId);
+                emitStudentScoreUpdate(sessionId, studentId);
             } else {
                 // Reset streak on wrong answer
                 activeSessions[sessionId].streaks[studentId] = 0;
-                io.to(`session_${sessionId}`).emit('student_score_update', {
-                    studentId,
-                    individualScores: activeSessions[sessionId].individualScores,
-                    streaks: activeSessions[sessionId].streaks
-                });
+                emitTeacherScoreUpdate(sessionId, studentId);
+                emitStudentScoreUpdate(sessionId, studentId);
             }
 
-            io.to(`session_${sessionId}`).emit('results_update', {
+            io.to(getTeacherRoom(sessionId)).emit('results_update', {
                 questionId,
                 results: activeSessions[sessionId].results[questionId],
                 answered: Array.from(activeSessions[sessionId].answeredStudents[questionId])
@@ -803,7 +857,7 @@ io.on('connection', (socket) => {
 
     // Teacher finishes the session broadcast
     socket.on('finish_session', ({ sessionId }) => {
-        io.to(`session_${sessionId}`).emit('session_finished');
+        io.to(getSessionRoom(sessionId)).emit('session_finished');
         delete activeSessions[sessionId];
     });
 
