@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
-import { Users, ChevronRight, CheckCircle2, Clock, UserMinus, Lock, Unlock, Timer, BarChart3 } from 'lucide-react';
+import { Users, ChevronRight, ChevronLeft, CheckCircle2, Clock, UserMinus, Lock, Unlock, Timer, BarChart3 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function TeacherPresenter() {
+export default function TeacherPresenter({ user }) {
     const { sessionId } = useParams();
     const navigate = useNavigate();
     const [socket, setSocket] = useState(null);
@@ -24,7 +24,7 @@ export default function TeacherPresenter() {
     const [autoAdvance, setAutoAdvance] = useState(false);
     const [timerRemaining, setTimerRemaining] = useState(null);
     const [timerState, setTimerState] = useState(null);
-    const [showDistribution, setShowDistribution] = useState(true);
+    const [showDistribution, setShowDistribution] = useState(false);
     const [showLeaderboard, setShowLeaderboard] = useState(false);
 
     // Team Mode & Scoring
@@ -32,6 +32,7 @@ export default function TeacherPresenter() {
     const [teamScores, setTeamScores] = useState({ 'Red': 0, 'Blue': 0, 'Green': 0, 'Yellow': 0 });
     const [individualScores, setIndividualScores] = useState({});
     const [streaks, setStreaks] = useState({});
+    const [fastestCorrectByQuestion, setFastestCorrectByQuestion] = useState({});
 
     // Countdown effect
     useEffect(() => {
@@ -59,7 +60,6 @@ export default function TeacherPresenter() {
     useEffect(() => {
         // 1. Fetch Session and Quiz info
         const loadData = async () => {
-            const user = JSON.parse(localStorage.getItem('quiz_user') || '{}');
             try {
                 const sessRes = await fetch(`/api/sessions/${sessionId}`, {
                     headers: {
@@ -104,22 +104,29 @@ export default function TeacherPresenter() {
         loadData();
 
         // 2. Connect Socket
-        const newSocket = io();
+        const newSocket = io({ transports: ['websocket'] });
         setSocket(newSocket);
 
         newSocket.on('connect', () => {
-            newSocket.emit('join_session', { sessionId, userId: 'teacher', role: 'teacher' });
+            newSocket.emit('join_session', { sessionId });
         });
 
         newSocket.on('session_state', (state) => {
             setCurrentIdx(state.currentQuestionIndex || 0);
             setQResults(state.results || {}); // Updated to qResults
-            setIsLocked(state.locked || false);
-            if (state.timerStart) {
-                setTimerState({ endTime: state.timerStart + (state.timerDuration * 1000), autoAdvance: false });
+            setParticipants(state.participantCount || 0);
+            if (state.participantDetails) {
+                setParticipantDetails(state.participantDetails);
             }
-            if (state.answeredStudents && state.answeredStudents[state.currentQuestionIndex]) {
-                setAnsweredStudents(new Set(state.answeredStudents[state.currentQuestionIndex].map(String)));
+            setIsLocked(state.locked || false);
+            if (state.timerStart && state.timerDuration && state.timerQuestionIndex === state.currentQuestionIndex) {
+                setTimerState({ endTime: state.timerStart + (state.timerDuration * 1000), autoAdvance: false });
+            } else {
+                setTimerState(null);
+                setTimerRemaining(null);
+            }
+            if (state.answeredStudents && state.currentQuestionId && state.answeredStudents[state.currentQuestionId]) {
+                setAnsweredStudents(new Set(state.answeredStudents[state.currentQuestionId].map(String)));
             } else {
                 setAnsweredStudents(new Set());
             }
@@ -129,6 +136,7 @@ export default function TeacherPresenter() {
             }
             if (state.individualScores) setIndividualScores(state.individualScores);
             if (state.streaks) setStreaks(state.streaks);
+            if (state.fastestCorrectByQuestion) setFastestCorrectByQuestion(state.fastestCorrectByQuestion);
         });
 
         newSocket.on('participants_update', ({ count, details }) => {
@@ -136,13 +144,24 @@ export default function TeacherPresenter() {
             if (details) setParticipantDetails(details);
         });
 
-        newSocket.on('results_update', ({ questionId, results: qResultsUpdate, answered }) => { // Updated to qResultsUpdate
+        newSocket.on('session_error', ({ message }) => {
+            toast.error(message);
+            navigate('/teacher');
+        });
+
+        newSocket.on('results_update', ({ questionId, results: qResultsUpdate, answered, fastestCorrect }) => { // Updated to qResultsUpdate
             setQResults(prev => ({ // Updated to qResults
                 ...prev,
                 [questionId]: qResultsUpdate
             }));
             if (answered) {
                 setAnsweredStudents(new Set(answered.map(String)));
+            }
+            if (Array.isArray(fastestCorrect)) {
+                setFastestCorrectByQuestion(prev => ({
+                    ...prev,
+                    [questionId]: fastestCorrect
+                }));
             }
         });
 
@@ -155,8 +174,16 @@ export default function TeacherPresenter() {
             if (newStreaks) setStreaks(newStreaks);
         });
 
-        newSocket.on('question_changed', ({ newIndex }) => {
-            setAnsweredStudents(new Set());
+        newSocket.on('question_changed', ({ newIndex, questionId, answered, results }) => {
+            if (answered) {
+                setAnsweredStudents(new Set(answered.map(String)));
+            } else {
+                setAnsweredStudents(new Set());
+            }
+            if (results && questionId) {
+                setQResults(prev => ({ ...prev, [questionId]: results }));
+            }
+            setCurrentIdx(newIndex);
             setIsLocked(false);
             setTimerState(null);
             setTimerRemaining(null);
@@ -189,22 +216,35 @@ export default function TeacherPresenter() {
         } else {
             // Quiz finished (or forced closed for async)
             try {
-                const user = JSON.parse(localStorage.getItem('quiz_user') || '{}');
+                // NEW: Socket-based fallback - Notify students even if the fetch is slow
+                socket.emit('finish_session', { sessionId });
+
                 // Tell server to mark session as complete
-                await fetch(`/api/sessions/${sessionId}/finish`, { 
+                await fetch(`/api/sessions/${sessionId}/finish`, {
                     method: 'PUT',
                     headers: {
                         'x-user-id': user.id,
                         'x-user-role': user.role
                     }
                 });
-                // Broadcast to students that it's over
-                socket.emit('finish_session', { sessionId });
-                toast.success("Session Closed!");
+                toast.success("Session finished and results finalized.");
                 navigate('/teacher');
             } catch (err) {
                 console.error("Error finishing session", err);
+                toast.error("Failed to finish session properly.");
             }
+        }
+    };
+
+    const handlePrev = () => {
+        if (!quiz || !socket) return;
+        if (session?.mode !== 'async' && currentIdx > 0) {
+            const prevIdx = currentIdx - 1;
+            setTimerState(null);
+            setIsLocked(false);
+            setResultsRevealed(false);
+            setCurrentIdx(prevIdx);
+            socket.emit('next_question', { sessionId, newIndex: prevIdx });
         }
     };
 
@@ -225,6 +265,13 @@ export default function TeacherPresenter() {
     }
 
     const currentQResults = qResults[currentQ.id] || {}; // Updated to currentQResults
+    const currentFastestCorrect = fastestCorrectByQuestion[currentQ.id] || [];
+    const podiumEntries = [
+        currentFastestCorrect[1] ? { ...currentFastestCorrect[1], place: 2 } : null,
+        currentFastestCorrect[0] ? { ...currentFastestCorrect[0], place: 1 } : null,
+        currentFastestCorrect[2] ? { ...currentFastestCorrect[2], place: 3 } : null
+    ].filter(Boolean);
+    const remainingFastestEntries = currentFastestCorrect.slice(3);
 
     const connectedStudentIds = Object.keys(participantDetails);
 
@@ -265,18 +312,28 @@ export default function TeacherPresenter() {
                         </div>
                     )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                        <Users size={18} /> {participants} Students
-                    </div>
-                    {session?.mode === 'async' ? (
-                        <button onClick={handleNext} style={{ backgroundColor: '#EF4444', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600 }}>
-                            Close Session
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                            <Users size={18} /> {participants} Students
+                        </div>
+                        <button onClick={() => navigate('/teacher')} style={{ backgroundColor: 'white', color: 'var(--text-main)', border: '1px solid var(--border)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600 }}>
+                            Dashboard
                         </button>
-                    ) : (
-                        <button id="teacher-next-btn" onClick={handleNext} style={{ backgroundColor: 'var(--secondary)', color: 'white', border: 'none', padding: '0.5rem 1.25rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, fontSize: '1rem' }}>
-                            {currentIdx < quiz.questions.length - 1 ? 'Next Question' : 'Finish Quiz'} <ChevronRight size={18} />
-                        </button>
+                        {session?.mode === 'async' ? (
+                            <button onClick={handleNext} style={{ backgroundColor: '#EF4444', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600 }}>
+                                Close Session
+                            </button>
+                        ) : (
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {currentIdx > 0 && (
+                                <button onClick={handlePrev} style={{ backgroundColor: 'white', color: 'var(--text-main)', border: '1px solid var(--border)', padding: '0.5rem 1.25rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, fontSize: '1rem' }}>
+                                    <ChevronLeft size={18} /> Previous
+                                </button>
+                            )}
+                            <button id="teacher-next-btn" onClick={handleNext} style={{ backgroundColor: 'var(--secondary)', color: 'white', border: 'none', padding: '0.5rem 1.25rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, fontSize: '1rem' }}>
+                                {currentIdx < quiz.questions.length - 1 ? 'Next Question' : 'Finish Quiz'} <ChevronRight size={18} />
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
@@ -285,9 +342,17 @@ export default function TeacherPresenter() {
                 <div style={{ flex: 1, backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                     <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>📝</div>
                     <h2 style={{ fontSize: '1.75rem', textAlign: 'center', marginBottom: '0.5rem' }}>Student-Paced Session Active</h2>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', textAlign: 'center', maxWidth: '500px' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', textAlign: 'center', maxWidth: '500px', marginBottom: '2rem' }}>
                         Students are navigating through the quiz at their own speed.
                     </p>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <button onClick={() => navigate('/teacher')} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600 }}>
+                            Return to Dashboard
+                        </button>
+                        <button onClick={handleNext} style={{ padding: '0.75rem 1.5rem', backgroundColor: '#FEE2E2', color: '#B91C1C', border: '1px solid #FECACA', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600 }}>
+                            Stop & Close Session
+                        </button>
+                    </div>
                 </div>
             ) : (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', gap: '1rem' }}>
@@ -506,15 +571,94 @@ export default function TeacherPresenter() {
                                     </div>
                                 ) : (
                                     <div style={{ backgroundColor: '#F0FDF4', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid #BBF7D0' }}>
-                                        <h4 style={{ color: '#166534', margin: '0 0 1rem 0', fontSize: '1rem' }}>⭐ Top Students</h4>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                            {Object.entries(individualScores).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([id, score], idx) => (
-                                                <div key={id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem', padding: '0.4rem 0.75rem', backgroundColor: 'white', borderRadius: '4px', border: '1px solid #DCFCE7' }}>
-                                                    <span style={{ fontWeight: 600 }}>{idx === 0 && '🥇 '}{idx === 1 && '🥈 '}{idx === 2 && '🥉 '}{participantDetails[id] || 'Student'}</span>
-                                                    <span style={{ fontWeight: 700 }}>{score}</span>
-                                                </div>
-                                            ))}
-                                        </div>
+                                        <h4 style={{ color: '#166534', margin: '0 0 1rem 0', fontSize: '1rem' }}>⚡ Fastest Correct Answers</h4>
+                                        {currentFastestCorrect.length > 0 ? (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                                {resultsRevealed && podiumEntries.length > 0 ? (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '0.75rem', minHeight: '180px' }}>
+                                                            {podiumEntries.map((entry, idx) => {
+                                                                const height = entry.place === 1 ? 138 : entry.place === 2 ? 116 : 98;
+                                                                const accent = entry.place === 1 ? '#F59E0B' : entry.place === 2 ? '#94A3B8' : '#FB7185';
+                                                                const medal = entry.place === 1 ? '🥇' : entry.place === 2 ? '🥈' : '🥉';
+                                                                return (
+                                                                    <div
+                                                                        key={`${entry.studentId}-${entry.place}`}
+                                                                        className="podium-rise"
+                                                                        style={{
+                                                                            animationDelay: `${idx * 0.12}s`,
+                                                                            flex: 1,
+                                                                            maxWidth: '120px',
+                                                                            minHeight: `${height}px`,
+                                                                            background: `linear-gradient(180deg, white 0%, ${entry.place === 1 ? '#FEF3C7' : entry.place === 2 ? '#E2E8F0' : '#FFE4E6'} 100%)`,
+                                                                            border: `1px solid ${accent}`,
+                                                                            borderRadius: '12px 12px 8px 8px',
+                                                                            padding: '0.75rem 0.6rem',
+                                                                            display: 'flex',
+                                                                            flexDirection: 'column',
+                                                                            justifyContent: 'space-between',
+                                                                            textAlign: 'center'
+                                                                        }}
+                                                                    >
+                                                                        <div>
+                                                                            <div style={{ fontSize: '1.3rem', marginBottom: '0.2rem' }}>{medal}</div>
+                                                                            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#166534', lineHeight: 1.2 }}>
+                                                                                {entry.username || participantDetails[String(entry.studentId)] || 'Student'}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                                                {Math.max(0, entry.timeTakenMs / 1000).toFixed(2)}s
+                                                                            </div>
+                                                                            <div style={{ fontWeight: 900, color: 'var(--primary)', marginTop: '0.15rem' }}>
+                                                                                +{entry.pointsEarned}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                        {remainingFastestEntries.map((entry, idx) => (
+                                                            <div key={entry.studentId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.7rem 0.9rem', backgroundColor: 'white', borderRadius: '8px', border: '1px solid #DCFCE7' }}>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                                                                    <span style={{ fontWeight: 700, color: '#166534' }}>
+                                                                        #{idx + 4} {entry.username || participantDetails[String(entry.studentId)] || 'Student'}
+                                                                    </span>
+                                                                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                                                                        {Math.max(0, entry.timeTakenMs / 1000).toFixed(2)}s
+                                                                    </span>
+                                                                </div>
+                                                                <span style={{ fontWeight: 800, color: 'var(--primary)' }}>+{entry.pointsEarned}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    currentFastestCorrect.map((entry, idx) => (
+                                                        <div key={entry.studentId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', backgroundColor: 'white', borderRadius: '8px', border: '1px solid #DCFCE7' }}>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                                                <span style={{ fontWeight: 800, color: '#166534' }}>
+                                                                    {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`} {' '}
+                                                                    {entry.username || participantDetails[String(entry.studentId)] || 'Student'}
+                                                                </span>
+                                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                                                    {Math.max(0, entry.timeTakenMs / 1000).toFixed(2)}s
+                                                                </span>
+                                                            </div>
+                                                            <span style={{ fontWeight: 800, color: 'var(--primary)' }}>
+                                                                +{entry.pointsEarned}
+                                                            </span>
+                                                        </div>
+                                                    ))
+                                                )}
+                                                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                                    This is tracked per question. The full leaderboard below remains the running total for the whole quiz.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <p style={{ margin: 0, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                                                No correct answers recorded for this question yet.
+                                            </p>
+                                        )}
                                     </div>
                                 )}
                             </div>

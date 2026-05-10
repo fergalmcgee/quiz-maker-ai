@@ -61,41 +61,54 @@ If students on the network cannot access the IP address, you may need to open po
 3. Select **Port** -> **TCP** -> Specific local ports: `3001`.
 4. Allow the connection -> Apply to Domain/Private/Public -> Name it "QuizMaker Server".
 
-## 7. How to Update (Without Losing Data)
-When you want to push new security updates or features to your Windows Server, follow these steps to ensure your students and quizzes remain safe:
+## 7. How to Update (Safe Side-by-Side Method)
+This is the recommended way to update your application. It allows you to keep the old version as a backup while moving to the new one.
 
-### 1. Backup your Database (CRITICAL)
-Before doing anything else, go to your project folder on the Windows Server (e.g., `C:\Projects\QuizMaker\server`) and **copy** the file named `quizmaker.db`.
-- Paste it in a safe "Backups" folder.
-- Rename it with the date (e.g., `quizmaker_backup_2026_03_18.db`).
-- **This file contains all your data.** Even if you delete everything else, keeping this file safe means you've kept your progress.
+### 1. Prepare the New Folder
+1. Create a **new folder** on your Windows Server (e.g., `C:\Projects\QuizMaker_V2`).
+2. Copy the entire contents of your new `QuizMaker` project (built on your Mac) into this new folder.
+3. On the Windows Server, inside the new `server` folder, run:
+   ```cmd
+   npm install
+   ```
 
-### 2. Get the New Code
-- **If using Git**: Run `git pull` from the main `QuizMaker` folder.
-- **If copying manually**: Copy these key files from your Mac to the Windows Server:
-    *   **`server/api.js`** and **`server/server.js`** (Security & Logic)
-    *   **`server/database.js`** (CRITICAL: This runs any necessary database "upgrades")
-    *   **`server/package.json`** (Ensures all new "ingredients" are installed)
-    *   **`client/dist`** folder (Replaces the old website interface)
-- **DO NOT** overwrite the `quizmaker.db` file in the `server/` folder if it asks.
+### 2. Copy the Database & Uploads (CRITICAL)
+Your `quizmaker.db` file contains all your quizzes, students, and results. Your `public/uploads` folder contains all your uploaded images. To move your data to the new version:
+1. Go to your **old** folder (e.g., `C:\Projects\QuizMaker\server`).
+2. **Copy** the `quizmaker.db` file.
+3. **Paste** it into the **new** server folder (e.g., `C:\Projects\QuizMaker_V2\server`).
+4. If it asks to overwrite, say **Yes** (the new version will automatically "upgrade" the database file on its first run).
+5. Next, go back to your **old** server folder and **Copy** the entire `public/uploads` folder (if it exists).
+6. **Paste** this folder into the **new** server's `public` folder `C:\Projects\QuizMaker_V2\server\public\`.
 
-### 3. Rebuild the Frontend
-On your Mac (where you have the full development environment):
-1. Go to `QuizMaker/client` and run `npm run build`.
-2. Copy the newly generated `dist` folder to the Windows Server, replacing the old `C:\Projects\QuizMaker\client\dist`.
+### 3. Switch Servers
+1. **Stop the old server**: Close the command prompt window where the old version is running.
+2. **Start the new server**:
+   ```cmd
+   cd C:\Projects\QuizMaker_V2\server
+   node server.js
+   ```
+3. **Verify**: Open `http://localhost:3001`. You should see the new version of the site, and all your existing quizzes and users will be present.
 
-### 4. Refresh Dependencies & Migrate Passwords
-On the Windows Server, go to `C:\Projects\QuizMaker\server` and run:
-```cmd
-npm install
-node migrate_windows.js
-```
-*The second command securely hashes your existing passwords so the new security features can work.*
+### 4. Keep the Old Folder as Backup
+You now have the old `C:\Projects\QuizMaker` folder as a complete backup. If anything goes wrong, you can simply stop the new server and restart the old one.
 
-### 5. Restart the Server
-Close the old command prompt window and start the server again:
-```cmd
-node server.js
-```
+---
 
-Your server will now be running the latest version with all your previous data intact!
+---
+
+## 8. Troubleshooting: "Not a valid Win32 application" (SQLite Error)
+If you see an error like `ERR_DLOPEN_FAILED` or `is not a valid Win32 application` referring to `node_sqlite3.node`, it means the `sqlite3` driver was installed for a different computer (like your Mac) and won't run on Windows.
+
+**To fix this on your Windows Server:**
+1. Navigate to the `server` folder: `cd C:\Projects\QuizMakerVersion2\server`
+2. **Delete** the `node_modules` folder.
+3. **Delete** the `package-lock.json` file.
+4. Run a fresh install:
+   ```cmd
+   npm install
+   ```
+5. Try starting the server again: `node server.js`
+
+> [!TIP]
+> This "Clean Install" ensures that Node.js downloads the specific Windows-compatible version of the database driver for your server.
