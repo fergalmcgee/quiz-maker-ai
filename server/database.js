@@ -330,6 +330,144 @@ function initializeTables() {
     )
   `;
 
+  const longAnswerQuizzesTable = `
+    CREATE TABLE IF NOT EXISTS long_answer_quizzes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      teacher_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      subject TEXT DEFAULT 'General',
+      level TEXT DEFAULT 'General',
+      topic TEXT DEFAULT 'General',
+      source_json TEXT,
+      is_archived INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `;
+
+  const longAnswerBankQuestionsTable = `
+    CREATE TABLE IF NOT EXISTS long_answer_bank_questions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      created_by INTEGER,
+      short_name TEXT,
+      answer_type TEXT NOT NULL DEFAULT 'prose',
+      question_text TEXT NOT NULL,
+      student_context TEXT,
+      ai_context TEXT,
+      context_image_url TEXT,
+      max_marks INTEGER NOT NULL DEFAULT 1,
+      answer_key TEXT,
+      mark_scheme TEXT DEFAULT '[]',
+      acceptable_alternatives TEXT DEFAULT '[]',
+      common_misconceptions TEXT DEFAULT '[]',
+      subject TEXT DEFAULT 'General',
+      level TEXT DEFAULT 'General',
+      topic TEXT DEFAULT 'General',
+      source TEXT,
+      is_archived INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    )
+  `;
+
+  const longAnswerQuestionsTable = `
+    CREATE TABLE IF NOT EXISTS long_answer_questions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      quiz_id INTEGER NOT NULL,
+      bank_question_id INTEGER,
+      short_name TEXT,
+      answer_type TEXT NOT NULL DEFAULT 'prose',
+      question_text TEXT NOT NULL,
+      student_context TEXT,
+      ai_context TEXT,
+      context_image_url TEXT,
+      max_marks INTEGER NOT NULL DEFAULT 1,
+      answer_key TEXT,
+      mark_scheme TEXT DEFAULT '[]',
+      acceptable_alternatives TEXT DEFAULT '[]',
+      common_misconceptions TEXT DEFAULT '[]',
+      topic TEXT DEFAULT 'General',
+      order_idx INTEGER NOT NULL DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (quiz_id) REFERENCES long_answer_quizzes(id) ON DELETE CASCADE,
+      FOREIGN KEY (bank_question_id) REFERENCES long_answer_bank_questions(id) ON DELETE SET NULL
+    )
+  `;
+
+  const longAnswerSessionsTable = `
+    CREATE TABLE IF NOT EXISTS long_answer_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      quiz_id INTEGER NOT NULL,
+      teacher_id INTEGER NOT NULL,
+      class_id INTEGER,
+      name TEXT,
+      mode TEXT NOT NULL DEFAULT 'async' CHECK(mode IN ('live', 'async')),
+      status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('draft', 'active', 'completed', 'archived')),
+      release_feedback INTEGER DEFAULT 1,
+      allow_ai_hints INTEGER DEFAULT 1,
+      ai_analysis TEXT,
+      expires_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (quiz_id) REFERENCES long_answer_quizzes(id) ON DELETE CASCADE,
+      FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL
+    )
+  `;
+
+  const longAnswerResponsesTable = `
+    CREATE TABLE IF NOT EXISTS long_answer_responses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id INTEGER NOT NULL,
+      question_id INTEGER NOT NULL,
+      student_id INTEGER NOT NULL,
+      answer_text TEXT NOT NULL,
+      ai_score INTEGER,
+      ai_feedback TEXT,
+      ai_improvements TEXT DEFAULT '[]',
+      ai_confidence TEXT,
+      ai_raw TEXT,
+      teacher_score INTEGER,
+      teacher_feedback TEXT,
+      submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (session_id) REFERENCES long_answer_sessions(id) ON DELETE CASCADE,
+      FOREIGN KEY (question_id) REFERENCES long_answer_questions(id) ON DELETE CASCADE,
+      FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(session_id, question_id, student_id)
+    )
+  `;
+
+  const longAnswerSubmissionsTable = `
+    CREATE TABLE IF NOT EXISTS long_answer_submissions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id INTEGER NOT NULL,
+      student_id INTEGER NOT NULL,
+      submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (session_id) REFERENCES long_answer_sessions(id) ON DELETE CASCADE,
+      FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(session_id, student_id)
+    )
+  `;
+
+  const longAnswerHelpLogsTable = `
+    CREATE TABLE IF NOT EXISTS long_answer_help_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id INTEGER NOT NULL,
+      question_id INTEGER NOT NULL,
+      student_id INTEGER NOT NULL,
+      answer_text TEXT,
+      hint_text TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (session_id) REFERENCES long_answer_sessions(id) ON DELETE CASCADE,
+      FOREIGN KEY (question_id) REFERENCES long_answer_questions(id) ON DELETE CASCADE,
+      FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `;
+
   db.serialize(() => {
     db.run(usersTable);
     db.run(quizzesTable);
@@ -352,6 +490,13 @@ function initializeTables() {
     db.run(quickCheckTemplatesTable);
     db.run(quickChecksTable);
     db.run(quickCheckResponsesTable);
+    db.run(longAnswerBankQuestionsTable);
+    db.run(longAnswerQuizzesTable);
+    db.run(longAnswerQuestionsTable);
+    db.run(longAnswerSessionsTable);
+    db.run(longAnswerResponsesTable);
+    db.run(longAnswerSubmissionsTable);
+    db.run(longAnswerHelpLogsTable);
     db.run(practiceScoresTable);
     db.run('CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at)');
     db.run('CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_id ON audit_logs(actor_id)');
@@ -367,6 +512,15 @@ function initializeTables() {
     db.run('CREATE INDEX IF NOT EXISTS idx_quick_checks_teacher_id ON quick_checks(teacher_id)');
     db.run('CREATE INDEX IF NOT EXISTS idx_quick_checks_class_id ON quick_checks(class_id)');
     db.run('CREATE INDEX IF NOT EXISTS idx_quick_check_responses_check_id ON quick_check_responses(quick_check_id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_long_answer_quizzes_teacher_id ON long_answer_quizzes(teacher_id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_long_answer_bank_questions_tags ON long_answer_bank_questions(subject, level, topic)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_long_answer_bank_questions_archived ON long_answer_bank_questions(is_archived)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_long_answer_questions_quiz_id ON long_answer_questions(quiz_id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_long_answer_sessions_teacher_id ON long_answer_sessions(teacher_id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_long_answer_sessions_class_id ON long_answer_sessions(class_id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_long_answer_responses_session_student ON long_answer_responses(session_id, student_id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_long_answer_submissions_session_student ON long_answer_submissions(session_id, student_id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_long_answer_help_logs_session_student ON long_answer_help_logs(session_id, student_id)');
     console.log('Database tables initialized.');
 
     // --- ALL DATABASE MIGRATIONS ---
@@ -547,6 +701,81 @@ function initializeTables() {
           if (!err) console.log("Migrated: Added badges to session_submissions.");
         });
       }
+    });
+
+    // 7. Long-answer question migrations
+    db.all("PRAGMA table_info(long_answer_questions);", (err, rows) => {
+      if (err) return console.error("Error checking long_answer_questions schema:", err);
+      const missingCols = [
+        { name: 'answer_type', type: "TEXT NOT NULL DEFAULT 'prose'" },
+        { name: 'bank_question_id', type: 'INTEGER' },
+        { name: 'short_name', type: 'TEXT' },
+        { name: 'student_context', type: 'TEXT' },
+        { name: 'ai_context', type: 'TEXT' },
+        { name: 'context_image_url', type: 'TEXT' }
+      ];
+
+      missingCols.forEach(col => {
+        if (!rows.some(r => r.name === col.name)) {
+          db.run(`ALTER TABLE long_answer_questions ADD COLUMN ${col.name} ${col.type}`, (alterErr) => {
+            if (alterErr) console.error(`Error adding ${col.name} to long_answer_questions:`, alterErr);
+            else console.log(`Migrated: Added ${col.name} to long_answer_questions.`);
+          });
+        }
+      });
+    });
+
+    // 8. Long-answer bank question migrations
+    db.all("PRAGMA table_info(long_answer_bank_questions);", (err, rows) => {
+      if (err) return console.error("Error checking long_answer_bank_questions schema:", err);
+      const missingCols = [
+        { name: 'short_name', type: 'TEXT' }
+      ];
+
+      missingCols.forEach(col => {
+        if (!rows.some(r => r.name === col.name)) {
+          db.run(`ALTER TABLE long_answer_bank_questions ADD COLUMN ${col.name} ${col.type}`, (alterErr) => {
+            if (alterErr) console.error(`Error adding ${col.name} to long_answer_bank_questions:`, alterErr);
+            else console.log(`Migrated: Added ${col.name} to long_answer_bank_questions.`);
+          });
+        }
+      });
+    });
+
+    // 9. Long-answer response teacher override migrations
+    db.all("PRAGMA table_info(long_answer_responses);", (err, rows) => {
+      if (err) return console.error("Error checking long_answer_responses schema:", err);
+      const missingCols = [
+        { name: 'teacher_score', type: 'INTEGER' },
+        { name: 'teacher_feedback', type: 'TEXT' }
+      ];
+
+      missingCols.forEach(col => {
+        if (!rows.some(r => r.name === col.name)) {
+          db.run(`ALTER TABLE long_answer_responses ADD COLUMN ${col.name} ${col.type}`, (alterErr) => {
+            if (alterErr) console.error(`Error adding ${col.name} to long_answer_responses:`, alterErr);
+            else console.log(`Migrated: Added ${col.name} to long_answer_responses.`);
+          });
+        }
+      });
+    });
+
+    // 10. Long-answer session settings and analysis migrations
+    db.all("PRAGMA table_info(long_answer_sessions);", (err, rows) => {
+      if (err) return console.error("Error checking long_answer_sessions schema:", err);
+      const missingCols = [
+        { name: 'allow_ai_hints', type: 'INTEGER DEFAULT 1' },
+        { name: 'ai_analysis', type: 'TEXT' }
+      ];
+
+      missingCols.forEach(col => {
+        if (!rows.some(r => r.name === col.name)) {
+          db.run(`ALTER TABLE long_answer_sessions ADD COLUMN ${col.name} ${col.type}`, (alterErr) => {
+            if (alterErr) console.error(`Error adding ${col.name} to long_answer_sessions:`, alterErr);
+            else console.log(`Migrated: Added ${col.name} to long_answer_sessions.`);
+          });
+        }
+      });
     });
   });
 }

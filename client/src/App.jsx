@@ -13,7 +13,11 @@ import StudentExitTicket from './pages/StudentExitTicket';
 import TeacherQuickChecks from './pages/TeacherQuickChecks';
 import TeacherQuickCheckDisplay from './pages/TeacherQuickCheckDisplay';
 import StudentQuickCheck from './pages/StudentQuickCheck';
+import TeacherLongAnswers from './pages/TeacherLongAnswers';
+import StudentLongAnswer from './pages/StudentLongAnswer';
 import { installApiSessionHandler } from './apiFetch';
+
+const appLogoUrl = '/uploads/u-challenge.jpeg';
 
 function App() {
     const [user, setUser] = useState(() => {
@@ -98,7 +102,7 @@ function App() {
         return (
             <div className="app-container">
                 <header className="navbar fade-in">
-                    <h1 className="logo">U-challenge</h1>
+                    <img className="logo-image" src={appLogoUrl} alt="U-Challenge Quiz Hub" />
                 </header>
                 <main className="content fade-in">
                     <div style={{ maxWidth: '400px', margin: '4rem auto', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -114,7 +118,7 @@ function App() {
             <Toaster position="top-right" />
             <div className="app-container">
                 <header className="navbar fade-in">
-                    <h1 className="logo">U-challenge</h1>
+                    <img className="logo-image" src={appLogoUrl} alt="U-Challenge Quiz Hub" />
                     {user && (
                         <div style={{ marginLeft: 'auto', display: 'flex', gap: '1rem', alignItems: 'center' }}>
                             <span style={{ fontWeight: 600 }}>{user.username} ({user.role})</span>
@@ -168,6 +172,10 @@ function App() {
                             path="/teacher/quick-checks/:checkId/display"
                             element={user && user.role === 'teacher' ? <TeacherQuickCheckDisplay user={user} /> : <Navigate to="/login" />}
                         />
+                        <Route
+                            path="/teacher/long-answer"
+                            element={user && ['teacher', 'admin'].includes(user.role) ? <TeacherLongAnswers user={user} /> : <Navigate to="/login" />}
+                        />
 
                         {/* Student Routes */}
                         <Route
@@ -185,6 +193,10 @@ function App() {
                         <Route
                             path="/student/quick-check/:checkId"
                             element={user && user.role === 'student' ? <StudentQuickCheck user={user} /> : <Navigate to="/login" />}
+                        />
+                        <Route
+                            path="/student/long-answer/:sessionId"
+                            element={user && user.role === 'student' ? <StudentLongAnswer user={user} /> : <Navigate to="/login" />}
                         />
 
                         <Route path="*" element={<Navigate to="/login" />} />

@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "repair-db": "node scripts/repair-database-schema.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

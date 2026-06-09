@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlayCircle, CheckCircle, Key, ArrowRight, Trophy, Clock, ClipboardList, Lightbulb } from 'lucide-react';
+import { PlayCircle, CheckCircle, Key, ArrowRight, Trophy, Clock, ClipboardList, Lightbulb, BookOpenText } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function StudentDashboard({ user }) {
@@ -14,6 +14,7 @@ export default function StudentDashboard({ user }) {
     const [practiceScores, setPracticeScores] = useState({}); // { quiz_id: best_score }
     const [exitTickets, setExitTickets] = useState([]);
     const [quickChecks, setQuickChecks] = useState([]);
+    const [longAnswerSessions, setLongAnswerSessions] = useState([]);
     const navigate = useNavigate();
     const previousActiveCount = useRef(0);
 
@@ -22,11 +23,13 @@ export default function StudentDashboard({ user }) {
         fetchPracticeScores();
         fetchExitTickets();
         fetchQuickChecks();
+        fetchLongAnswerSessions();
         const interval = setInterval(() => {
             fetchSessions(true);
             fetchPracticeScores();
             fetchExitTickets();
             fetchQuickChecks();
+            fetchLongAnswerSessions();
         }, 15000); // 15 seconds
         return () => clearInterval(interval);
     }, []);
@@ -54,6 +57,17 @@ export default function StudentDashboard({ user }) {
             }
         } catch (e) {
             console.error('Error fetching quick checks:', e);
+        }
+    };
+
+    const fetchLongAnswerSessions = async () => {
+        try {
+            const res = await fetch(`/api/long-answer/sessions/student/${user.id}`);
+            if (res.ok) {
+                setLongAnswerSessions(await res.json());
+            }
+        } catch (e) {
+            console.error('Error fetching long-answer sessions:', e);
         }
     };
 
@@ -128,6 +142,8 @@ export default function StudentDashboard({ user }) {
     const submittedExitTickets = exitTickets.filter(ticket => ticket.is_submitted === 1);
     const pendingQuickChecks = quickChecks.filter(check => check.is_submitted !== 1);
     const submittedQuickChecks = quickChecks.filter(check => check.is_submitted === 1);
+    const activeLongAnswers = longAnswerSessions.filter(session => session.status === 'active' && session.is_submitted !== 1);
+    const completedLongAnswers = longAnswerSessions.filter(session => session.status !== 'active' || session.is_submitted === 1);
     const getRetakeLabel = (session) => session.retake_in_progress
         ? 'Continue Retake'
         : 'Retake Quiz';
@@ -204,7 +220,9 @@ export default function StudentDashboard({ user }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                     <h2 style={{ marginTop: 0 }}>Student Dashboard</h2>
-                    <p style={{ color: 'var(--text-muted)' }}>Welcome, {user.username}. Here are your assigned tasks:</p>
+                    <p style={{ color: 'var(--text-muted)' }}>
+                        Welcome, {user.username}{user.form_class ? ` from class ${user.form_class}` : ''}. Here are your assigned tasks:
+                    </p>
                 </div>
                 <button
                     onClick={() => setShowPasswordModal(true)}
@@ -295,6 +313,61 @@ export default function StudentDashboard({ user }) {
                                 <p style={{ margin: 0, color: '#166534', fontSize: '0.9rem' }}>
                                     Sent {check.submitted_at ? new Date(check.submitted_at).toLocaleString() : 'recently'}
                                 </p>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <div style={{ marginTop: '2rem' }}>
+                <h3>Long Answer Tasks</h3>
+                {activeLongAnswers.length === 0 && completedLongAnswers.length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)', marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-md)' }}>
+                        No long-answer tasks right now.
+                    </p>
+                ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+                        {activeLongAnswers.map(session => (
+                            <div key={session.id} style={{ padding: '1.35rem', backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#0F172A', fontWeight: 800, marginBottom: '0.5rem' }}>
+                                    <BookOpenText size={20} /> Long Answer
+                                </div>
+                                <h4 style={{ margin: '0 0 0.35rem 0', fontSize: '1.15rem' }}>{session.name || session.quiz_title}</h4>
+                                <p style={{ margin: '0 0 0.75rem 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                    {session.class_name} · {session.question_count} question{session.question_count === 1 ? '' : 's'} · Teacher: {session.teacher_name}
+                                </p>
+                                <div style={{ marginBottom: '1rem', color: '#475569', fontSize: '0.85rem', fontWeight: 700 }}>
+                                    {session.response_count || 0} / {session.question_count || 0} answered
+                                </div>
+                                <button
+                                    onClick={() => navigate(`/student/long-answer/${session.id}`)}
+                                    style={{ backgroundColor: '#0F172A', color: 'white', padding: '0.7rem 1.1rem', borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                >
+                                    <ArrowRight size={18} /> Open
+                                </button>
+                            </div>
+                        ))}
+                        {completedLongAnswers.map(session => (
+                            <div key={session.id} style={{ padding: '1.35rem', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 'var(--radius-md)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#166534', fontWeight: 800, marginBottom: '0.5rem' }}>
+                                    <CheckCircle size={20} /> Long Answer Complete
+                                </div>
+                                <h4 style={{ margin: '0 0 0.35rem 0', fontSize: '1.15rem' }}>{session.name || session.quiz_title}</h4>
+                                <p style={{ margin: '0 0 1rem 0', color: '#166534', fontSize: '0.9rem' }}>
+                                    {session.is_submitted === 1 && session.release_feedback === 1
+                                        ? `Score: ${session.score_total ?? session.ai_total ?? 0} / ${session.max_total || 0}`
+                                        : session.is_submitted === 1
+                                            ? 'Submitted. Your teacher will release marks after review.'
+                                        : 'This task closed before your final submission.'}
+                                </p>
+                                <button
+                                    onClick={() => navigate(`/student/long-answer/${session.id}`)}
+                                    style={{ backgroundColor: 'white', color: '#166534', padding: '0.6rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid #86EFAC', cursor: 'pointer', fontWeight: 800 }}
+                                >
+                                    {session.is_submitted === 1 && session.release_feedback === 1
+                                        ? 'View Feedback'
+                                        : session.is_submitted === 1 ? 'View Submission' : 'View Answers'}
+                                </button>
                             </div>
                         ))}
                     </div>

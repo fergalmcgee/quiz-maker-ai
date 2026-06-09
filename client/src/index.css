@@ -44,7 +44,7 @@ h1, h2, h3, h4, h5, h6 {
 .navbar {
   background-color: var(--surface);
   box-shadow: var(--shadow-sm);
-  padding: 1rem 2rem;
+  padding: 0.5rem 2rem;
   display: flex;
   align-items: center;
   position: sticky;
@@ -60,6 +60,14 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   color: transparent;
+}
+
+.logo-image {
+  display: block;
+  width: min(300px, 52vw);
+  height: clamp(60px, 6vw, 78px);
+  object-fit: cover;
+  object-position: center;
 }
 
 .content {
@@ -103,6 +111,42 @@ h1, h2, h3, h4, h5, h6 {
 .podium-rise {
   opacity: 0;
   animation: podiumRise 0.45s ease-out forwards, podiumGlow 2.4s ease-in-out infinite;
+}
+
+@keyframes longAnswerButtonFill {
+  0% { transform: translateX(-100%); }
+  55% { transform: translateX(-25%); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes longAnswerSpin {
+  to { transform: rotate(360deg); }
+}
+
+.long-answer-loading-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(146, 64, 14, 0.18);
+  transform: translateX(-100%);
+  animation: longAnswerButtonFill 2.4s ease-in-out infinite;
+  z-index: 0;
+}
+
+.long-answer-loading-button-primary::before {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.long-answer-button-content {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.long-answer-loading-button svg {
+  animation: longAnswerSpin 0.9s linear infinite;
 }
 
 /* Utilities */

@@ -1,0 +1,439 @@
+{
+  "title": "0478 Computer Science Paper 2 AI-Marked Practice - February/March 2026",
+  "description": "Selected text-answer questions from Cambridge IGCSE Computer Science 0478/22 February/March 2026. Includes explanation, pseudocode/program-code, and SQL items. Excludes MCQ, diagram drawing, trace tables, and truth tables.",
+  "subject": "Computer Science",
+  "level": "IGCSE",
+  "topic": "Algorithms, Programming and Logic",
+  "source": {
+    "question_paper": "0478 Computer Science March 2026 Question Paper 22",
+    "mark_scheme": "0478 Computer Science March 2026 Mark Scheme 22",
+    "component": "0478/22",
+    "series": "February/March 2026"
+  },
+  "questions": [
+    {
+      "id": "0478_22_FM26_2b",
+      "short_name": "0478/22 F/M/26 - Q2(b) - Validation",
+      "answer_type": "prose",
+      "question": "Explain the reasons why validation checks are necessary when data is input.",
+      "student_context": "A program asks users to enter data. Validation checks are applied to the data at the point of input before the data is accepted or stored.",
+      "max_marks": 3,
+      "topic": "Validation",
+      "answer_key": "Validation checks are used to check that input data meets given criteria and is sensible. They can be applied automatically as data is entered, reducing the likelihood that errors are stored and reducing the later need for correction or maintenance.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that validation checks test whether data meets given criteria or is sensible."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that validation can happen in real time, as data is entered, or automatically."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that validation reduces the likelihood of errors before data is stored."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that validation reduces later correction, maintenance, or clean-up work."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit valid explanations of validation preventing invalid or unreasonable data from being accepted.",
+        "Credit answers that distinguish validation from verification, as long as the reason for validation is correct."
+      ],
+      "common_misconceptions": [
+        "Saying validation proves the data is accurate.",
+        "Confusing validation with verification checks."
+      ]
+    },
+    {
+      "id": "0478_22_FM26_2c",
+      "short_name": "0478/22 F/M/26 - Q2(c) - Pseudocode and Validation",
+      "answer_type": "pseudocode",
+      "question": "Write pseudocode for an algorithm to perform a validation check on each number as it is input. The algorithm must input 20 numbers one at a time. If a number is negative, store it in the current element of array NegNumbers[]. If a number is not negative, ask for it to be input again until a negative number is input. When all 20 negative numbers have been stored, output a message to state the check has been completed. Use appropriate input prompts and output messages. Do not declare any arrays or variables.",
+      "student_context": "NegNumbers[] is an existing array. The algorithm should only store accepted negative values. Invalid values should not use up one of the 20 storage positions. You do not need to declare arrays or variables.",
+      "max_marks": 6,
+      "topic": "Pseudocode and Validation",
+      "answer_key": "A valid solution uses a counted loop for 20 accepted negative numbers. For each position, it repeatedly inputs a number until the number is negative. Negative numbers are stored in NegNumbers[] at the correct current index. The solution includes suitable prompts, an error/retry message, and a completion message.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Uses an appropriate loop to iterate for 20 accepted inputs."
+        },
+        {
+          "marks": 1,
+          "criterion": "Inputs a number."
+        },
+        {
+          "marks": 1,
+          "criterion": "Uses selection or a condition-controlled loop to test whether each input is negative or not negative."
+        },
+        {
+          "marks": 1,
+          "criterion": "Stores a negative number in the correct array location in NegNumbers[]."
+        },
+        {
+          "marks": 1,
+          "criterion": "Repeatedly asks for input if the number is not negative until a negative number is entered."
+        },
+        {
+          "marks": 1,
+          "criterion": "Includes at least two suitable outputs from input prompt, error message, or completion message."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept valid pseudocode or program code.",
+        "Accept REPEAT...UNTIL, WHILE, or equivalent logic if exactly 20 negative values are stored.",
+        "Ignore minor syntax differences if the intended logic is clear."
+      ],
+      "common_misconceptions": [
+        "Counting every attempted input rather than every accepted negative number.",
+        "Storing non-negative numbers.",
+        "Using only an IF statement without repeating invalid input."
+      ]
+    },
+    {
+      "id": "0478_22_FM26_3",
+      "short_name": "0478/22 F/M/26 - Q3 - Program Development Life Cycle",
+      "answer_type": "prose",
+      "question": "The program development life cycle is split into a number of stages. Describe what happens during the analysis and design stages of the program development life cycle.",
+      "student_context": "Focus only on the analysis stage and the design stage. Do not describe coding, testing, implementation or evaluation unless you are using them to make a clear contrast.",
+      "max_marks": 6,
+      "topic": "Program Development Life Cycle",
+      "answer_key": "During analysis, the problem is understood by identifying the important features, breaking the problem into smaller manageable parts, and identifying functional requirements. During design, the problem is further broken down and a plan for the solution is produced, for example using structure diagrams, flowcharts, or pseudocode.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "For analysis: mentions abstraction to focus on the important aspects of the problem."
+        },
+        {
+          "marks": 1,
+          "criterion": "For analysis: mentions decomposition of the problem into smaller manageable parts."
+        },
+        {
+          "marks": 1,
+          "criterion": "For analysis: identifies the functional requirements of the problem."
+        },
+        {
+          "marks": 1,
+          "criterion": "For design: mentions decomposition into further sub-problems."
+        },
+        {
+          "marks": 1,
+          "criterion": "For design: mentions generating structure diagrams to represent the proposed system."
+        },
+        {
+          "marks": 1,
+          "criterion": "For design: mentions constructing a flowchart to represent the algorithm."
+        },
+        {
+          "marks": 1,
+          "criterion": "For design: mentions writing a representation of the algorithm in pseudocode."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award up to 3 marks for analysis points and up to 3 marks for design points.",
+        "Credit equivalent descriptions of requirements gathering and algorithm planning."
+      ],
+      "common_misconceptions": [
+        "Describing implementation/coding instead of design.",
+        "Describing testing or evaluation instead of analysis/design."
+      ]
+    },
+    {
+      "id": "0478_22_FM26_5a",
+      "short_name": "0478/22 F/M/26 - Q5(a) - Pseudocode Debugging",
+      "answer_type": "pseudocode",
+      "question": "A bubble sort pseudocode algorithm for sorting Names[] contains five errors. Identify the line numbers of five errors and suggest corrections. Relevant lines include: 03 DECLARE Row : STRING; 07 Swap <- FALSE; 08 WHILE NOT Swap DO; 09 Swap <- FALSE; 10 FOR Row <- 2 TO 199; 16 Names[Row, 1] <- Names[Row + 1, 2]; 21 NEXT Column.",
+      "student_context": "Names[] is a two-dimensional array with 200 rows and 2 columns. The bubble sort should sort rows by comparing the values in column 1, while keeping the corresponding column 2 value with the same row.\n\nRelevant pseudocode lines:\n03 DECLARE Row : STRING\n07 Swap <- FALSE\n08 WHILE NOT Swap DO\n09 Swap <- FALSE\n10 FOR Row <- 2 TO 199\n16 Names[Row, 1] <- Names[Row + 1, 2]\n21 NEXT Column",
+      "max_marks": 5,
+      "topic": "Pseudocode Debugging",
+      "answer_key": "The five corrections are: line 03 should declare Row as INTEGER; line 09 should set Swap to TRUE; line 10 should loop Row from 1 TO 199; line 16 should assign Names[Row, 2] <- Names[Row + 1, 2]; line 21 should be NEXT Row.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Identifies line 03 and corrects DECLARE Row : STRING to DECLARE Row : INTEGER."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies line 09 and corrects Swap <- FALSE to Swap <- TRUE."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies line 10 and corrects FOR Row <- 2 TO 199 to FOR Row <- 1 TO 199."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies line 16 and corrects the target to Names[Row, 2] <- Names[Row + 1, 2]."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies line 21 and corrects NEXT Column to NEXT Row."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award marks for equivalent corrections even if arrow notation or exact formatting differs.",
+        "The line number and correction should match the same error."
+      ],
+      "common_misconceptions": [
+        "Changing line 07 instead of line 09.",
+        "Changing the comparison line when it is already comparing column 1.",
+        "Using NEXT Temp or NEXT Column for the row loop."
+      ]
+    },
+    {
+      "id": "0478_22_FM26_5b",
+      "short_name": "0478/22 F/M/26 - Q5(b) - Pseudocode and Arrays",
+      "answer_type": "pseudocode",
+      "question": "Write pseudocode for an algorithm, using nested iteration, to output the contents of Names[]. Names[] is a two-dimensional array with 200 rows and 2 columns.",
+      "student_context": "Names[] contains 200 rows and 2 columns. Both columns should be output for every row. Use nested iteration so the algorithm visits each row and each column.",
+      "max_marks": 4,
+      "topic": "Pseudocode and Arrays",
+      "answer_key": "A valid solution uses an outer loop from 1 to 200 and an inner loop from 1 to 2. It outputs Names[Row, Column] or equivalent using the loop counters as array indexes so both columns are output for each row before moving to the next name.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Uses an outer loop with correct limits for the 200 rows."
+        },
+        {
+          "marks": 1,
+          "criterion": "Uses an inner loop with correct limits for the 2 columns."
+        },
+        {
+          "marks": 1,
+          "criterion": "Outputs both corresponding elements from the array before moving to the next name."
+        },
+        {
+          "marks": 1,
+          "criterion": "Uses appropriate loop counter variables for all array indices."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept Row/Column or equivalent counter names.",
+        "Accept valid program code if it clearly uses nested iteration and correct indexes."
+      ],
+      "common_misconceptions": [
+        "Using a single loop and outputting only one column.",
+        "Looping columns from 1 to 200 or rows from 1 to 2.",
+        "Using fixed indexes instead of loop counters."
+      ]
+    },
+    {
+      "id": "0478_22_FM26_5c",
+      "short_name": "0478/22 F/M/26 - Q5(c) - Sorting Algorithms",
+      "answer_type": "prose",
+      "question": "A bubble sort algorithm sorts a two-dimensional array Names[] by comparing only the values in the first column. Describe a possible problem with the algorithm that could mean the names are not sorted accurately.",
+      "student_context": "Names[] is a two-dimensional array. Column 1 stores one part of a name, such as a family name, and column 2 stores another part, such as a given name. The sort compares only column 1.",
+      "max_marks": 2,
+      "topic": "Sorting Algorithms",
+      "answer_key": "The algorithm only compares the name in the first column, such as a last name. If several people have the same last name, their first names may not be sorted correctly and those entries may remain in the order they were entered.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that the sort only checks the name in the first column, such as the last name."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that duplicate first-column values could leave first names unsorted or entries in input order."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit answers that explain the need for a secondary sort key.",
+        "Credit examples involving two people with the same surname."
+      ],
+      "common_misconceptions": [
+        "Saying bubble sort cannot sort names at all.",
+        "Only saying the algorithm is inefficient without explaining the accuracy problem."
+      ]
+    },
+    {
+      "id": "0478_22_FM26_6b",
+      "short_name": "0478/22 F/M/26 - Q6(b) - Algorithms",
+      "answer_type": "prose",
+      "question": "Explain the purpose of an algorithm that processes a sentence by finding spaces, separating the sentence into words, finding the length of each word, and outputting each word with its length.",
+      "student_context": "The algorithm is given one sentence as input. It treats spaces as separators between words and processes the sentence to produce output about the individual words.",
+      "max_marks": 3,
+      "topic": "Algorithms",
+      "answer_key": "The algorithm calculates or stores the length of the sentence, splits the sentence into separate words by finding spaces, finds the length of each word, and outputs each word with its length.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Mentions calculating or storing the length of the sentence."
+        },
+        {
+          "marks": 1,
+          "criterion": "Mentions dividing the sentence into words or finding spaces between words."
+        },
+        {
+          "marks": 1,
+          "criterion": "Mentions finding the length of each word."
+        },
+        {
+          "marks": 1,
+          "criterion": "Mentions outputting the separate words with their lengths."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 3 marks.",
+        "Credit equivalent descriptions of tokenising a sentence and reporting word lengths."
+      ],
+      "common_misconceptions": [
+        "Saying the algorithm counts the number of sentences.",
+        "Saying the algorithm sorts the words alphabetically."
+      ]
+    },
+    {
+      "id": "0478_22_FM26_6c",
+      "short_name": "0478/22 F/M/26 - Q6(c) - User-Friendly Programs",
+      "answer_type": "prose",
+      "question": "An algorithm may be difficult to understand if it is used as a program. Identify three improvements that could be made to make the algorithm more user friendly.",
+      "student_context": "Consider the sentence-processing algorithm as if a user is running it as a program. Think about how the user knows what to enter, how the output is presented, and whether the program is convenient to use more than once.",
+      "max_marks": 3,
+      "topic": "User-Friendly Programs",
+      "answer_key": "The program could add an input prompt so the user knows what to enter, add output messages or headings so the output is clear, and include a repeating loop so the user can process another sentence without restarting the program.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Suggests adding an input prompt so the user knows what to enter."
+        },
+        {
+          "marks": 1,
+          "criterion": "Suggests adding output messages or headings so the output is understandable."
+        },
+        {
+          "marks": 1,
+          "criterion": "Suggests adding repetition so another sentence can be entered without restarting."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit clear equivalent user-interface improvements that make input/output easier to understand."
+      ],
+      "common_misconceptions": [
+        "Suggesting changes that only improve efficiency, not user friendliness.",
+        "Suggesting changes to the algorithm's purpose rather than presentation or interaction."
+      ]
+    },
+    {
+      "id": "0478_22_FM26_8b",
+      "short_name": "0478/22 F/M/26 - Q8(b) - Databases",
+      "answer_type": "prose",
+      "question": "The data in both IDCode and Country fields are unique in a database table. State one reason why IDCode would make a better primary key than Country.",
+      "student_context": "Database table: NATIONAL_TREES\nFields: IDCode, Country, Continent, CommonName, ScientificName\n\nIn the current data, both IDCode and Country are unique. The table stores national tree records for different countries.",
+      "max_marks": 1,
+      "topic": "Databases",
+      "answer_key": "IDCode is likely to be shorter or fixed length, making it easier to manage. Also, a country name may not always remain unique because some countries can have more than one national tree.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that IDCode is likely to be shorter than the country name."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that IDCode is a fixed size, making it easier to manage."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that Country may not always be unique because some countries may have more than one national tree."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 1 mark.",
+        "Credit any one valid database reason that clearly favours IDCode as the primary key."
+      ],
+      "common_misconceptions": [
+        "Saying a primary key does not need to be unique.",
+        "Saying Country cannot contain text."
+      ]
+    },
+    {
+      "id": "0478_22_FM26_8d",
+      "short_name": "0478/22 F/M/26 - Q8(d) - SQL",
+      "answer_type": "sql",
+      "question": "Complete the SQL statement to list only the country, common name and scientific name of the national trees listed for North America, in alphabetical order of their common names. The table is NATIONAL_TREES and has fields IDCode, Country, Continent, CommonName, ScientificName.",
+      "student_context": "Database table: NATIONAL_TREES\nFields:\n- IDCode\n- Country\n- Continent\n- CommonName\n- ScientificName\n\nThe result should show only records where Continent is North America. The output should be sorted alphabetically by common name.",
+      "max_marks": 5,
+      "topic": "SQL",
+      "answer_key": "SELECT Country, CommonName, ScientificName FROM NATIONAL_TREES WHERE Continent = \"North America\" ORDER BY CommonName ASC;",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "SELECT includes at least two correct fields from Country, CommonName, ScientificName."
+        },
+        {
+          "marks": 1,
+          "criterion": "SELECT includes the remaining correct field so only Country, CommonName and ScientificName are selected."
+        },
+        {
+          "marks": 1,
+          "criterion": "Uses the correct FROM NATIONAL_TREES clause."
+        },
+        {
+          "marks": 1,
+          "criterion": "Uses the correct WHERE condition for Continent = \"North America\"."
+        },
+        {
+          "marks": 1,
+          "criterion": "Uses ORDER BY CommonName to sort alphabetically by common name."
+        }
+      ],
+      "acceptable_alternatives": [
+        "ASC is optional.",
+        "Accept single quotes around North America.",
+        "Accept harmless capitalization and formatting differences."
+      ],
+      "common_misconceptions": [
+        "Selecting IDCode when only country, common name and scientific name are requested.",
+        "Filtering by Country instead of Continent.",
+        "Ordering by Country instead of CommonName."
+      ]
+    },
+    {
+      "id": "0478_22_FM26_9",
+      "short_name": "0478/22 F/M/26 - Q9 - Programming Task",
+      "answer_type": "pseudocode",
+      "question": "Write a program or pseudocode for a class survey voting system. Options[] stores between 2 and 12 options. Votes[] stores votes from between 2 and 1000 voters. VoteCount[] stores the number of votes for each option, where the array index represents the option number. Your solution must initialise arrays, input and validate the number of options and voters, input and store each option, display the list of options for each voter, input and validate each vote, store votes, count votes for each option, find the most and least popular options, and output the most and least popular options with their vote counts. Add comments to explain how the code works. Do not declare arrays, variables or constants.",
+      "student_context": "A class is running a survey where voters choose one option from a numbered list.\n\nExisting arrays:\n- Options[] stores the survey option text.\n- Votes[] stores the option number chosen by each voter.\n- VoteCount[] stores the number of votes for each option. The array index represents the option number.\n\nValid ranges:\n- Number of options: 2 to 12 inclusive.\n- Number of voters: 2 to 1000 inclusive.\n\nYou do not need to declare arrays, variables or constants.",
+      "max_marks": 15,
+      "topic": "Programming Task",
+      "answer_key": "A strong solution initialises Options[], Votes[] and VoteCount[], validates option count between 2 and 12 and voter count between 2 and 1000, stores each option, displays all options to each voter, validates each vote against the option range, stores each vote, counts votes for each option, finds maximum and minimum vote counts, and outputs the most and least popular option names with counts. The solution should use appropriate iteration, selection, input, output, arrays/lists, meaningful identifiers and useful comments.",
+      "mark_scheme": [
+        {
+          "marks": 3,
+          "criterion": "Initialises arrays and inputs/validates the number of options and voters using suitable loops, input, output, selection and validation."
+        },
+        {
+          "marks": 3,
+          "criterion": "Inputs options, stores them in Options[], displays possible options, inputs and validates voters' choices, and stores choices in Votes[]."
+        },
+        {
+          "marks": 3,
+          "criterion": "Counts votes for each option, finds most and least popular options, and outputs both options with vote counts."
+        },
+        {
+          "marks": 2,
+          "criterion": "Uses appropriate data structures including Options[], Votes[] and VoteCount[] or equivalent arrays/lists that store the required data."
+        },
+        {
+          "marks": 2,
+          "criterion": "Uses meaningful identifiers and relevant comments explaining the code."
+        },
+        {
+          "marks": 2,
+          "criterion": "Solution is logically ordered and accurate enough to perform all required tasks, ignoring minor syntax errors."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept pseudocode or program code.",
+        "Do not require handling ties for most or least popular options.",
+        "Ignore minor syntax errors if the algorithm is logically clear."
+      ],
+      "common_misconceptions": [
+        "Not validating option count, voter count or each vote.",
+        "Counting only the final vote instead of all votes.",
+        "Outputting only option numbers without the option names.",
+        "Failing to initialise VoteCount[] before counting."
+      ]
+    }
+  ]
+}

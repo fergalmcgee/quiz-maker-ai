@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Eye, EyeOff, Monitor, Square } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Monitor, Square, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const lightMeta = {
@@ -14,6 +14,7 @@ export default function TeacherQuickCheckDisplay({ user }) {
     const navigate = useNavigate();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showTrafficLightDetails, setShowTrafficLightDetails] = useState(false);
 
     const fetchResponses = async () => {
         try {
@@ -109,6 +110,11 @@ export default function TeacherQuickCheckDisplay({ user }) {
                             {revealed ? <EyeOff size={18} /> : <Eye size={18} />} {revealed ? 'Hide Responses' : 'Reveal All Responses'}
                         </button>
                     )}
+                    {check.mode === 'traffic_light' && (
+                        <button title={showTrafficLightDetails ? 'Hide teacher details' : 'Show teacher details'} onClick={() => setShowTrafficLightDetails(current => !current)} style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', backgroundColor: showTrafficLightDetails ? '#FEE2E2' : '#A7F3D0', color: showTrafficLightDetails ? '#991B1B' : '#064E3B', border: 'none', borderRadius: 'var(--radius-md)', padding: '0.75rem 1rem', cursor: 'pointer', fontWeight: 900 }}>
+                            <Star size={18} /> TD
+                        </button>
+                    )}
                     {check.status === 'open' && (
                         <button onClick={() => updateStatus('closed')} style={{ backgroundColor: 'white', color: '#111827', border: 'none', borderRadius: 'var(--radius-md)', padding: '0.75rem 1rem', cursor: 'pointer', fontWeight: 900 }}>
                             End Quick Check
@@ -127,21 +133,28 @@ export default function TeacherQuickCheckDisplay({ user }) {
                             </div>
                         ))}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-                        {['green', 'yellow', 'red'].map(light => (
-                            <section key={light} style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', padding: '1rem' }}>
-                                <h2 style={{ marginTop: 0, color: lightMeta[light].color }}>{lightMeta[light].label}</h2>
-                                <div style={{ display: 'grid', gap: '0.65rem' }}>
-                                    {responses.filter(response => response.traffic_light === light).map(response => (
-                                        <div key={response.id} style={{ backgroundColor: lightMeta[light].bg, borderRadius: 'var(--radius-md)', padding: '0.75rem', fontWeight: 800 }}>
-                                            {response.username}
-                                            {response.text_answer && <div style={{ marginTop: '0.35rem', fontWeight: 500, color: 'var(--text-main)' }}>{response.text_answer}</div>}
+                    {showTrafficLightDetails && (
+                        <div style={{ padding: '1rem', border: '2px solid #FDE68A', borderRadius: 'var(--radius-lg)', backgroundColor: '#FFFBEB' }}>
+                            <p style={{ margin: '0 0 1rem 0', color: '#92400E', fontWeight: 800 }}>
+                                Teacher-only details. Hide this panel before displaying the screen to students.
+                            </p>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                                {['green', 'yellow', 'red'].map(light => (
+                                    <section key={light} style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', padding: '1rem' }}>
+                                        <h2 style={{ marginTop: 0, color: lightMeta[light].color }}>{lightMeta[light].label}</h2>
+                                        <div style={{ display: 'grid', gap: '0.65rem' }}>
+                                            {responses.filter(response => response.traffic_light === light).map(response => (
+                                                <div key={response.id} style={{ backgroundColor: lightMeta[light].bg, borderRadius: 'var(--radius-md)', padding: '0.75rem', fontWeight: 800 }}>
+                                                    {response.username}
+                                                    {response.text_answer && <div style={{ marginTop: '0.35rem', fontWeight: 500, color: 'var(--text-main)' }}>{response.text_answer}</div>}
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
-                            </section>
-                        ))}
-                    </div>
+                                    </section>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </>
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>

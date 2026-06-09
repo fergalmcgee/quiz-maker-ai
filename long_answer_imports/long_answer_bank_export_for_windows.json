@@ -1,0 +1,1543 @@
+{
+  "title": "QuizMaker Long Answer Bank Export",
+  "description": "Admin-import-ready export of active long-answer bank questions only. This does not include users, classes, sessions, multiple-choice questions, or student responses.",
+  "subject": "Computer Science",
+  "level": "IGCSE",
+  "topic": "Long Answer Bank Export",
+  "exported_at": "2026-05-30T12:33:55.874Z",
+  "source_database": "/Users/fergal.mcgee/Documents/Projects/QuizMaker/server/quizmaker.db",
+  "questions": [
+    {
+      "id": "0478/11 O/N/25 - Q1(a) - Binary Representation",
+      "short_name": "0478/11 O/N/25 - Q1(a) - Binary Representation",
+      "answer_type": "prose",
+      "question": "State the highest denary number that can be stored in a single 8-bit register.",
+      "student_context": "The register stores an unsigned binary value.",
+      "ai_context": "Require the exact denary value.",
+      "context_image_url": "",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Binary Representation",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "255",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States 255."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept the exact value with harmless surrounding explanation."
+      ],
+      "common_misconceptions": [
+        "Giving 256.",
+        "Treating the register as a signed value."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q1(b) - Binary Representation",
+      "short_name": "0478/11 O/N/25 - Q1(b) - Binary Representation",
+      "answer_type": "prose",
+      "question": "Convert the denary numbers 23 and 168 into the 8-bit binary values that would be stored in registers.",
+      "student_context": "Give one 8-bit binary value for 23 and one 8-bit binary value for 168.",
+      "ai_context": "Award one mark for each correct 8-bit conversion. Require leading zeroes where needed.",
+      "context_image_url": "",
+      "max_marks": 2,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Binary Representation",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "23 = 00010111. 168 = 10101000.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Converts 23 to 00010111."
+        },
+        {
+          "marks": 1,
+          "criterion": "Converts 168 to 10101000."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept labels, line breaks or clear equivalent formatting."
+      ],
+      "common_misconceptions": [
+        "Omitting the required leading zeroes for 23.",
+        "Reversing bit order."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q1(c) - Binary Representation",
+      "short_name": "0478/11 O/N/25 - Q1(c) - Binary Representation",
+      "answer_type": "prose",
+      "question": "Convert the 8-bit binary value 00001011 into denary.",
+      "student_context": "Give the denary value that a calculator would display.",
+      "ai_context": "Require the exact denary value.",
+      "context_image_url": "",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Binary Representation",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "11",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States 11."
+        }
+      ],
+      "acceptable_alternatives": [],
+      "common_misconceptions": [
+        "Interpreting the value as decimal digits rather than binary."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q1(d) - Binary Representation",
+      "short_name": "0478/11 O/N/25 - Q1(d) - Binary Representation",
+      "answer_type": "prose",
+      "question": "Convert the 8-bit binary value 01000010 into denary.",
+      "student_context": "Give the denary value that a calculator would display.",
+      "ai_context": "Require the exact denary value.",
+      "context_image_url": "",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Binary Representation",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "66",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States 66."
+        }
+      ],
+      "acceptable_alternatives": [],
+      "common_misconceptions": [
+        "Interpreting the value as decimal digits rather than binary."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q1(e) - Binary Addition",
+      "short_name": "0478/11 O/N/25 - Q1(e) - Binary Addition",
+      "answer_type": "prose",
+      "question": "Add the binary numbers 01110110 and 00110000. Give your answer in binary and show your working.",
+      "student_context": "Use 8-bit binary addition. Include carries or another clear method.",
+      "ai_context": "Award one mark for each correct nibble of the final 8-bit answer and one mark for a valid method of working such as carries.",
+      "context_image_url": "",
+      "max_marks": 3,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Binary Addition",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "01110110 + 00110000 = 10100110. Carries should be shown or explained.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Gives the correct left nibble 1010 in the final answer."
+        },
+        {
+          "marks": 1,
+          "criterion": "Gives the correct right nibble 0110 in the final answer."
+        },
+        {
+          "marks": 1,
+          "criterion": "Shows a correct binary-addition method, such as appropriate carries."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept a clearly explained equivalent working method."
+      ],
+      "common_misconceptions": [
+        "Adding the values as denary text.",
+        "Giving a final answer without working."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q1(f) - Binary Representation",
+      "short_name": "0478/11 O/N/25 - Q1(f) - Binary Representation",
+      "answer_type": "prose",
+      "question": "State how a calculator could represent a negative denary number as a binary number.",
+      "student_context": "Name the standard binary representation method.",
+      "ai_context": "Require two's complement or a harmless spelling variant.",
+      "context_image_url": "",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Binary Representation",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "Use two's complement.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States two's complement."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept twos complement or two's complement."
+      ],
+      "common_misconceptions": [
+        "Only saying to add a minus sign."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q1(g) - Embedded Systems",
+      "short_name": "0478/11 O/N/25 - Q1(g) - Embedded Systems",
+      "answer_type": "prose",
+      "question": "Explain why an electronic calculator is an example of an embedded system.",
+      "student_context": "Give two relevant characteristics of an embedded system that apply to a calculator.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 2,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Embedded Systems",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "A calculator has a single or limited function, uses dedicated hardware and a microprocessor, and its function is not easily changed.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Explains that it has a single, limited or dedicated function."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains another valid embedded-system characteristic: dedicated hardware, a microprocessor, or a function that is not easily changed."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit any two distinct valid embedded-system characteristics."
+      ],
+      "common_misconceptions": [
+        "Only saying that the calculator is electronic.",
+        "Describing a general-purpose computer."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q2(a) - Compression",
+      "short_name": "0478/11 O/N/25 - Q2(a) - Compression",
+      "answer_type": "prose",
+      "question": "Lossy compression reduces the size of an image file. Give two other reductions that lossy compression can make to the image.",
+      "student_context": "Do not repeat file size. Give two image properties or kinds of image information that can be reduced.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 2,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Compression",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "Lossy compression can reduce resolution or number of pixels, colour depth or bit depth, image quality or detail, and metadata.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Identifies one valid reduction: resolution/pixels, colour depth/bit depth, quality/detail, or metadata."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies a second distinct valid reduction."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept equivalent wording for the listed image properties."
+      ],
+      "common_misconceptions": [
+        "Repeating that file size is reduced.",
+        "Giving two phrases that mean the same reduction."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q2(b)(i) - Networks",
+      "short_name": "0478/11 O/N/25 - Q2(b)(i) - Networks",
+      "answer_type": "prose",
+      "question": "State the name of the network device that reads a packet's destination IP address and forwards the packet towards the correct destination.",
+      "student_context": "Give the device name.",
+      "ai_context": "Require router.",
+      "context_image_url": "",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Networks",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "Router",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States router."
+        }
+      ],
+      "acceptable_alternatives": [],
+      "common_misconceptions": [
+        "Giving switch."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q2(b)(ii) - Networks",
+      "short_name": "0478/11 O/N/25 - Q2(b)(ii) - Networks",
+      "answer_type": "prose",
+      "question": "Identify the part of a packet where the destination IP address is found.",
+      "student_context": "Give the packet section name.",
+      "ai_context": "Require header or packet header.",
+      "context_image_url": "",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Networks",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "Packet header",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States header or packet header."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept header."
+      ],
+      "common_misconceptions": [
+        "Giving payload."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q2(c) - Networks",
+      "short_name": "0478/11 O/N/25 - Q2(c) - Networks",
+      "answer_type": "prose",
+      "question": "Give three characteristics of the IPv6 address format.",
+      "student_context": "Describe the structure or notation of an IPv6 address.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 3,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Networks",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "IPv6 addresses use 128 bits and hexadecimal notation. They are separated by colons into 8 groups of 4 digits. Consecutive groups of zeroes may be represented once using ::.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that IPv6 uses 128 bits."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that IPv6 uses hexadecimal."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that groups are separated by colons."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that there are 8 groups of digits."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that each group has 4 digits."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that consecutive groups of zeroes can be represented once using ::."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 3 marks for any three distinct valid characteristics."
+      ],
+      "common_misconceptions": [
+        "Describing IPv4 dotted-decimal notation.",
+        "Saying IPv6 uses 32 bits."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q2(e)(ii) - Encryption",
+      "short_name": "0478/11 O/N/25 - Q2(e)(ii) - Encryption",
+      "answer_type": "prose",
+      "question": "Give one type of encryption other than symmetric encryption.",
+      "student_context": "Name the alternative encryption type.",
+      "ai_context": "Require asymmetric encryption.",
+      "context_image_url": "",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Encryption",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "Asymmetric encryption",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States asymmetric encryption."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept asymmetric."
+      ],
+      "common_misconceptions": [
+        "Giving hashing."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q3(a) - Character Encoding",
+      "short_name": "0478/11 O/N/25 - Q3(a) - Character Encoding",
+      "answer_type": "prose",
+      "question": "Explain how text entered on an on-screen keyboard is converted to binary so that it can be processed.",
+      "student_context": "Describe how characters are represented by the computer.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 3,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Character Encoding",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "A character set such as ASCII or Unicode is used. Each character has a unique binary value and is converted to that value.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that a character set is used."
+        },
+        {
+          "marks": 1,
+          "criterion": "Gives ASCII or Unicode as an example."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that each character has a unique binary value or is converted to its binary code."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit equivalent descriptions of character encoding."
+      ],
+      "common_misconceptions": [
+        "Saying that whole words each have one binary value."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q3(b)(i) - Data Storage",
+      "short_name": "0478/11 O/N/25 - Q3(b)(i) - Data Storage",
+      "answer_type": "prose",
+      "question": "Convert 4 gibibytes (GiB) into mebibytes (MiB).",
+      "student_context": "Give the amount of memory in MiB.",
+      "ai_context": "Require 4096 MiB.",
+      "context_image_url": "",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Data Storage",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "4096 MiB",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States 4096 MiB."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept 4096 when the unit is clear from the question."
+      ],
+      "common_misconceptions": [
+        "Using 1000 instead of 1024."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q3(b)(ii) - Data Storage",
+      "short_name": "0478/11 O/N/25 - Q3(b)(ii) - Data Storage",
+      "answer_type": "prose",
+      "question": "Convert 4 gibibytes (GiB) into tebibytes (TiB). Your answer may be rounded to 3 decimal places.",
+      "student_context": "Give the amount of memory in TiB.",
+      "ai_context": "Accept 0.004 when rounded to 3 decimal places or the exact binary-unit conversion 0.00390625.",
+      "context_image_url": "",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Data Storage",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "0.004 TiB, or 0.00390625 TiB before rounding.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States 0.004 TiB or 0.00390625 TiB."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept an equivalent value with harmless additional decimal places."
+      ],
+      "common_misconceptions": [
+        "Using decimal-unit conversion instead of binary-unit conversion."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q3(c) - Memory",
+      "short_name": "0478/11 O/N/25 - Q3(c) - Memory",
+      "answer_type": "prose",
+      "question": "Explain why a portable device needs RAM.",
+      "student_context": "Give three valid purposes or characteristics of RAM that explain why the device uses it.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 3,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Memory",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "RAM stores data, instructions, software or programs currently in use. It provides temporary or volatile storage and allows direct CPU access or storage close to the processor.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Explains that RAM stores data or instructions currently in use."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that RAM stores software or programs currently in use."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that RAM is temporary or volatile storage."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that RAM allows direct CPU access or stores data closer to the processor."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 3 marks for three distinct valid points."
+      ],
+      "common_misconceptions": [
+        "Describing permanent secondary storage.",
+        "Saying RAM retains data when power is removed."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q4(a) - Cybersecurity",
+      "short_name": "0478/11 O/N/25 - Q4(a) - Cybersecurity",
+      "answer_type": "prose",
+      "question": "Describe the process of phishing.",
+      "student_context": "Describe how a phishing attempt reaches a user and how personal information may be stolen.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 4,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Cybersecurity",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "A legitimate-looking email is sent to a user. The user clicks a link or replies, may be directed to a fake website, enters personal data, and that data is stolen or maliciously used by a third party.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Describes a legitimate-looking email or message being sent to the user."
+        },
+        {
+          "marks": 1,
+          "criterion": "Describes the user clicking a link or replying to the message."
+        },
+        {
+          "marks": 1,
+          "criterion": "Describes the user being directed to a fake website."
+        },
+        {
+          "marks": 1,
+          "criterion": "Describes the user entering personal data."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the data is stolen or maliciously used by a third party."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 4 marks for four distinct stages.",
+        "Credit equivalent phishing channels such as a convincing message where the process is clear."
+      ],
+      "common_misconceptions": [
+        "Only describing malware infection.",
+        "Only stating that phishing is a scam without describing the process."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q4(b) - Cybersecurity",
+      "short_name": "0478/11 O/N/25 - Q4(b) - Cybersecurity",
+      "answer_type": "prose",
+      "question": "Give two ways an employee could identify phishing.",
+      "student_context": "Describe two checks that could reveal a suspicious message.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 2,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Cybersecurity",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "Check the sender email address, check the tone or spelling of the email, and check the URL attached to a link.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Suggests checking the sender's email address."
+        },
+        {
+          "marks": 1,
+          "criterion": "Suggests checking the tone or spelling of the email."
+        },
+        {
+          "marks": 1,
+          "criterion": "Suggests checking the URL attached to a link."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 2 marks for two distinct valid checks."
+      ],
+      "common_misconceptions": [
+        "Giving two versions of the same check."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q4(c) - Cybersecurity",
+      "short_name": "0478/11 O/N/25 - Q4(c) - Cybersecurity",
+      "answer_type": "prose",
+      "question": "Give three examples of malware that anti-malware software can detect.",
+      "student_context": "Name three distinct types of malware.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 3,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Cybersecurity",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "Examples include virus, worm, Trojan horse, spyware, keylogger, ransomware and adware.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Names one valid malware type."
+        },
+        {
+          "marks": 1,
+          "criterion": "Names a second distinct valid malware type."
+        },
+        {
+          "marks": 1,
+          "criterion": "Names a third distinct valid malware type."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept virus, worm, Trojan horse, spyware, keylogger, ransomware, adware or another clearly valid malware example."
+      ],
+      "common_misconceptions": [
+        "Giving phishing as a malware type.",
+        "Repeating the same malware type."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q4(d)(i) - Programming Languages",
+      "short_name": "0478/11 O/N/25 - Q4(d)(i) - Programming Languages",
+      "answer_type": "prose",
+      "question": "State what is meant by a high-level programming language.",
+      "student_context": "Give one valid defining characteristic.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Programming Languages",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "A high-level language uses English-like statements, needs conversion into machine code before processing, or is portable across computers.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States a valid characteristic: English-like statements, conversion to machine code, or portability."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit equivalent wording for one valid characteristic."
+      ],
+      "common_misconceptions": [
+        "Defining it only as a language used by skilled programmers."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q4(d)(ii) - Programming Languages",
+      "short_name": "0478/11 O/N/25 - Q4(d)(ii) - Programming Languages",
+      "answer_type": "prose",
+      "question": "Give two benefits of using a high-level language, other than code being easy to debug.",
+      "student_context": "Do not use easy debugging as either answer.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 2,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Programming Languages",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "High-level code is easy or quick to read, write and understand; it is machine independent; it is less likely to contain errors; and it lets programmers focus on the problem rather than memory or hardware manipulation.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Gives one valid benefit other than easy debugging."
+        },
+        {
+          "marks": 1,
+          "criterion": "Gives a second distinct valid benefit other than easy debugging."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept readability, ease of writing, ease of understanding, machine independence, fewer errors, or abstraction from hardware."
+      ],
+      "common_misconceptions": [
+        "Repeating easy debugging.",
+        "Giving two phrases that express the same benefit."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q4(d)(iii) - Programming Languages",
+      "short_name": "0478/11 O/N/25 - Q4(d)(iii) - Programming Languages",
+      "answer_type": "prose",
+      "question": "Give one drawback of using a high-level language, other than needing conversion to a low-level language before it can run.",
+      "student_context": "Do not repeat the need for translation.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Programming Languages",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "A high-level language cannot directly manipulate hardware, takes longer to convert, cannot use specialised hardware, or uses more memory.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Gives one valid drawback other than requiring conversion before execution."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept inability to manipulate hardware directly, slower conversion, inability to use specialised hardware, or less efficient memory use."
+      ],
+      "common_misconceptions": [
+        "Repeating that translation is needed."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q4(d)(iv) - Translators",
+      "short_name": "0478/11 O/N/25 - Q4(d)(iv) - Translators",
+      "answer_type": "prose",
+      "question": "Explain why an interpreter is more appropriate than a compiler while a computer game is being developed.",
+      "student_context": "Focus on how an interpreter helps during development and debugging.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 3,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Translators",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "An interpreter translates and executes code line by line, stops when an error is found and shows its location, allows errors to be corrected without retranslating the whole program, and makes it easier to test sections before the whole program is complete.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Explains that code is translated and executed line by line."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that execution stops when an error is found or that the error location is shown."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that errors can be corrected in real time or without retranslating the whole program."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that sections of code can be tested without writing the whole program."
+        },
+        {
+          "marks": 1,
+          "criterion": "Links these characteristics to easier debugging during development."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 3 marks for three distinct valid points."
+      ],
+      "common_misconceptions": [
+        "Saying an interpreter produces a standalone executable.",
+        "Only saying that an interpreter is faster without explanation."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q5(a) - Robotics",
+      "short_name": "0478/11 O/N/25 - Q5(a) - Robotics",
+      "answer_type": "prose",
+      "question": "Describe three characteristics of a robot.",
+      "student_context": "Give three distinct characteristics.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 3,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Robotics",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "A robot has a mechanical structure or framework, electrical components such as sensors, a microprocessor or actuators, is programmable, and has the ability to move.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Mentions a mechanical structure or framework."
+        },
+        {
+          "marks": 1,
+          "criterion": "Mentions electrical components such as sensors, a microprocessor or actuators."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that it is programmable."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that it has the ability to move."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 3 marks for three distinct valid characteristics."
+      ],
+      "common_misconceptions": [
+        "Only describing artificial intelligence.",
+        "Only giving examples of robots."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q5(b) - Robotics",
+      "short_name": "0478/11 O/N/25 - Q5(b) - Robotics",
+      "answer_type": "prose",
+      "question": "Explain one benefit to a supermarket of using robots to deliver groceries to elderly customers.",
+      "student_context": "Give a benefit and a matching explanation.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 2,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Robotics",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "The supermarket may gain customers and increase sales because elderly people who could not visit the store can shop there. It may also serve customers more efficiently because multiple orders can be delivered at the same time.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Identifies a valid supermarket benefit, such as gaining customers, increasing sales or improving delivery efficiency."
+        },
+        {
+          "marks": 1,
+          "criterion": "Provides a matching explanation for the identified benefit."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit another realistic business benefit with a clear linked explanation."
+      ],
+      "common_misconceptions": [
+        "Giving only a benefit to the customer.",
+        "Giving a benefit without explaining why it applies."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q5(c) - Robotics",
+      "short_name": "0478/11 O/N/25 - Q5(c) - Robotics",
+      "answer_type": "prose",
+      "question": "Explain one drawback to elderly customers of robots being used to deliver their groceries.",
+      "student_context": "Give a drawback and a matching explanation.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 2,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Robotics",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "Customers may get less exercise because they no longer walk to or around the store. Some may struggle with or mistrust the technology, causing stress, anxiety or mistakes when receiving deliveries.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Identifies a valid drawback to an elderly customer, such as reduced exercise or difficulty trusting or using technology."
+        },
+        {
+          "marks": 1,
+          "criterion": "Provides a matching explanation for the identified drawback."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit another realistic customer drawback with a clear linked explanation."
+      ],
+      "common_misconceptions": [
+        "Giving only a drawback to the supermarket.",
+        "Giving a drawback without explaining why it applies."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q5(e) - Artificial Intelligence",
+      "short_name": "0478/11 O/N/25 - Q5(e) - Artificial Intelligence",
+      "answer_type": "prose",
+      "question": "Give three ways that grocery-delivery robots could make use of artificial intelligence.",
+      "student_context": "Describe three distinct uses of AI by a delivery robot.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 3,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Artificial Intelligence",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "A robot could learn routes, learn where obstacles occur, deal with obstacles more effectively, reason about paths and roads, use machine learning, and identify patterns in route data.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Gives one valid use of AI by a delivery robot."
+        },
+        {
+          "marks": 1,
+          "criterion": "Gives a second distinct valid use of AI by a delivery robot."
+        },
+        {
+          "marks": 1,
+          "criterion": "Gives a third distinct valid use of AI by a delivery robot."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept learning routes, obstacle handling, distinguishing paths and roads, machine learning, pattern recognition, or another realistic AI use."
+      ],
+      "common_misconceptions": [
+        "Only describing ordinary programmed movement with no AI aspect.",
+        "Repeating the same route-learning point."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q6(a) - CPU Architecture",
+      "short_name": "0478/11 O/N/25 - Q6(a) - CPU Architecture",
+      "answer_type": "prose",
+      "question": "Complete the sequence describing how a Von Neumann CPU fetches and decodes an instruction. State the six missing components in order: The [1] stores the address of the next instruction to be fetched. This address is sent to the [2]. The instruction is retrieved from RAM and stored in the [3]. It is then sent to the [4], where it is decoded by the [5] using an [6].",
+      "student_context": "Give six terms in order. Use standard CPU register and component names.",
+      "ai_context": "Award one mark for each correct term in the correct numbered position. Do not award a correct term placed in the wrong position.",
+      "context_image_url": "",
+      "max_marks": 6,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "CPU Architecture",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "1. program counter; 2. memory address register; 3. memory data register; 4. current instruction register; 5. control unit; 6. instruction set.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Position 1 is program counter."
+        },
+        {
+          "marks": 1,
+          "criterion": "Position 2 is memory address register."
+        },
+        {
+          "marks": 1,
+          "criterion": "Position 3 is memory data register."
+        },
+        {
+          "marks": 1,
+          "criterion": "Position 4 is current instruction register."
+        },
+        {
+          "marks": 1,
+          "criterion": "Position 5 is control unit."
+        },
+        {
+          "marks": 1,
+          "criterion": "Position 6 is instruction set."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept standard abbreviations PC, MAR, MDR and CIR when their positions are clear."
+      ],
+      "common_misconceptions": [
+        "Using memory instruction register instead of memory data register.",
+        "Giving the correct terms in the wrong order."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q6(b)(i) - Operating Systems",
+      "short_name": "0478/11 O/N/25 - Q6(b)(i) - Operating Systems",
+      "answer_type": "prose",
+      "question": "An interrupt is sent to the CPU whenever a key is pressed on a keyboard. Give the name of this type of interrupt.",
+      "student_context": "Name the interrupt category.",
+      "ai_context": "Require hardware interrupt.",
+      "context_image_url": "",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Operating Systems",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "Hardware interrupt",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States hardware interrupt."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept hardware."
+      ],
+      "common_misconceptions": [
+        "Giving software interrupt."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q6(b)(ii) - Operating Systems",
+      "short_name": "0478/11 O/N/25 - Q6(b)(ii) - Operating Systems",
+      "answer_type": "prose",
+      "question": "Give the name of the program that services an interrupt.",
+      "student_context": "Give the standard program name.",
+      "ai_context": "Accept interrupt handler or interrupt service routine.",
+      "context_image_url": "",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Operating Systems",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "Interrupt handler, also called an interrupt service routine.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States interrupt handler or interrupt service routine."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept ISR."
+      ],
+      "common_misconceptions": [
+        "Giving operating system without naming the servicing routine."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q6(b)(iii) - Operating Systems",
+      "short_name": "0478/11 O/N/25 - Q6(b)(iii) - Operating Systems",
+      "answer_type": "prose",
+      "question": "Give one operating-system function other than handling interrupts.",
+      "student_context": "Name one valid operating-system function.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Operating Systems",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "Examples include managing files, providing a user interface, managing peripherals and drivers, managing memory, managing multitasking, providing a platform for applications, providing security, and managing user accounts.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States one valid operating-system function other than handling interrupts."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept file management, user interface, peripheral or driver management, memory management, multitasking, application platform, security, user-account management, or another clearly valid OS function."
+      ],
+      "common_misconceptions": [
+        "Giving a function of application software."
+      ]
+    },
+    {
+      "id": "0478/11 O/N/25 - Q7 - Data Transmission",
+      "short_name": "0478/11 O/N/25 - Q7 - Data Transmission",
+      "answer_type": "prose",
+      "question": "A theatre microphone is connected by cables to speakers around the theatre. Identify the most appropriate data-transmission methods for this purpose and explain your choices.",
+      "student_context": "Consider how bits should travel over the cable and whether data needs to travel in one direction or both directions.",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 5,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Data Transmission",
+      "source": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+      "answer_key": "Use serial transmission because data travels a long distance over one wire, one bit at a time, with less risk of skew and adequate speed. Use simplex transmission because data only needs to travel from microphone to speakers and does not need to return.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Identifies serial transmission."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies simplex transmission."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains a valid reason for serial transmission: long distance, one wire, bits sent in order or one at a time, less skew/error, or adequate speed."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains another distinct valid reason for serial transmission."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains simplex transmission: data only needs to travel in one direction and does not need to return from speakers to microphone."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award the two method marks only for serial and simplex.",
+        "Award up to three explanation marks using distinct valid points."
+      ],
+      "common_misconceptions": [
+        "Choosing parallel transmission for a long cable run.",
+        "Choosing duplex transmission when speakers do not need to send data back."
+      ]
+    },
+    {
+      "id": "0478/22 F/M/26 - Q2(b) - Validation",
+      "short_name": "0478/22 F/M/26 - Q2(b) - Validation",
+      "answer_type": "prose",
+      "question": "Explain the reasons why validation checks are necessary when data is input.",
+      "student_context": "",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 3,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Validation",
+      "source": "0478 Computer Science Paper 2 AI-Marked Practice - February/March 2026",
+      "answer_key": "Validation checks are used to check that input data meets given criteria and is sensible. They can be applied automatically as data is entered, reducing the likelihood that errors are stored and reducing the later need for correction or maintenance.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that validation checks test whether data meets given criteria or is sensible."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that validation can happen in real time, as data is entered, or automatically."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that validation reduces the likelihood of errors before data is stored."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that validation reduces later correction, maintenance, or clean-up work."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit valid explanations of validation preventing invalid or unreasonable data from being accepted.",
+        "Credit answers that distinguish validation from verification, as long as the reason for validation is correct."
+      ],
+      "common_misconceptions": [
+        "Saying validation proves the data is accurate.",
+        "Confusing validation with verification checks."
+      ]
+    },
+    {
+      "id": "0478/22 F/M/26 - Q2(c) - Pseudocode and Validation",
+      "short_name": "0478/22 F/M/26 - Q2(c) - Pseudocode and Validation",
+      "answer_type": "pseudocode",
+      "question": "Write pseudocode for an algorithm to perform a validation check on each number as it is input. The algorithm must input 20 numbers one at a time. \nIf a number is negative, store it in the current element of array NegNumbers[]. \nIf a number is not negative, ask for it to be input again until a negative number is input. \n\nWhen all 20 negative numbers have been stored, output a message to state the check has been completed. \n\nUse appropriate input prompts and output messages. Do not declare any arrays or variables.",
+      "student_context": "",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 6,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Pseudocode and Validation",
+      "source": "0478 Computer Science Paper 2 AI-Marked Practice - February/March 2026",
+      "answer_key": "A valid solution uses a counted loop for 20 accepted negative numbers. For each position, it repeatedly inputs a number until the number is negative. Negative numbers are stored in NegNumbers[] at the correct current index. The solution includes suitable prompts, an error/retry message, and a completion message.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Uses an appropriate loop to iterate for 20 accepted inputs."
+        },
+        {
+          "marks": 1,
+          "criterion": "Inputs a number."
+        },
+        {
+          "marks": 1,
+          "criterion": "Uses selection or a condition-controlled loop to test whether each input is negative or not negative."
+        },
+        {
+          "marks": 1,
+          "criterion": "Stores a negative number in the correct array location in NegNumbers[]."
+        },
+        {
+          "marks": 1,
+          "criterion": "Repeatedly asks for input if the number is not negative until a negative number is entered."
+        },
+        {
+          "marks": 1,
+          "criterion": "Includes at least two suitable outputs from input prompt, error message, or completion message."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept valid pseudocode or program code.",
+        "Accept REPEAT...UNTIL, WHILE, or equivalent logic if exactly 20 negative values are stored.",
+        "Ignore minor syntax differences if the intended logic is clear."
+      ],
+      "common_misconceptions": [
+        "Counting every attempted input rather than every accepted negative number.",
+        "Storing non-negative numbers.",
+        "Using only an IF statement without repeating invalid input."
+      ]
+    },
+    {
+      "id": "0478/22 F/M/26 - Q3 - Program Development Life Cycle",
+      "short_name": "0478/22 F/M/26 - Q3 - Program Development Life Cycle",
+      "answer_type": "prose",
+      "question": "The program development life cycle is split into a number of stages. \n\nDescribe what happens during the analysis and design stages of the program development life cycle.",
+      "student_context": "",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 6,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Program Development Life Cycle",
+      "source": "0478 Computer Science Paper 2 AI-Marked Practice - February/March 2026",
+      "answer_key": "During analysis, the problem is understood by identifying the important features, breaking the problem into smaller manageable parts, and identifying functional requirements. During design, the problem is further broken down and a plan for the solution is produced, for example using structure diagrams, flowcharts, or pseudocode.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "For analysis: mentions abstraction to focus on the important aspects of the problem."
+        },
+        {
+          "marks": 1,
+          "criterion": "For analysis: mentions decomposition of the problem into smaller manageable parts."
+        },
+        {
+          "marks": 1,
+          "criterion": "For analysis: identifies the functional requirements of the problem."
+        },
+        {
+          "marks": 1,
+          "criterion": "For design: mentions decomposition into further sub-problems."
+        },
+        {
+          "marks": 1,
+          "criterion": "For design: mentions generating structure diagrams to represent the proposed system."
+        },
+        {
+          "marks": 1,
+          "criterion": "For design: mentions constructing a flowchart to represent the algorithm."
+        },
+        {
+          "marks": 1,
+          "criterion": "For design: mentions writing a representation of the algorithm in pseudocode."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award up to 3 marks for analysis points and up to 3 marks for design points.",
+        "Credit equivalent descriptions of requirements gathering and algorithm planning."
+      ],
+      "common_misconceptions": [
+        "Describing implementation/coding instead of design.",
+        "Describing testing or evaluation instead of analysis/design."
+      ]
+    },
+    {
+      "id": "0478/22 F/M/26 - Q5(a) - Pseudocode Debugging",
+      "short_name": "0478/22 F/M/26 - Q5(a) - Pseudocode Debugging",
+      "answer_type": "pseudocode",
+      "question": "A bubble sort pseudocode algorithm for sorting Names[] contains five errors. \n\nIdentify the line numbers of five errors and suggest corrections. \n\ne.g Line 01 - DECLARE Celtic : Good  should be DECLARE Celtic : BEST",
+      "student_context": "",
+      "ai_context": "",
+      "context_image_url": "/uploads/image-1779433314592-26137916.png",
+      "max_marks": 5,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Pseudocode Debugging",
+      "source": "0478 Computer Science Paper 2 AI-Marked Practice - February/March 2026",
+      "answer_key": "The five corrections are: line 03 should declare Row as INTEGER; line 09 should set Swap to TRUE; line 10 should loop Row from 1 TO 199; line 16 should assign Names[Row, 2] <- Names[Row + 1, 2]; line 21 should be NEXT Row.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Identifies line 03 and corrects DECLARE Row : STRING to DECLARE Row : INTEGER."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies line 09 and corrects Swap <- FALSE to Swap <- TRUE."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies line 10 and corrects FOR Row <- 2 TO 199 to FOR Row <- 1 TO 199."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies line 16 and corrects the target to Names[Row, 2] <- Names[Row + 1, 2]."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies line 21 and corrects NEXT Column to NEXT Row."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award marks for equivalent corrections even if arrow notation or exact formatting differs.",
+        "The line number and correction should match the same error."
+      ],
+      "common_misconceptions": [
+        "Changing line 07 instead of line 09.",
+        "Changing the comparison line when it is already comparing column 1.",
+        "Using NEXT Temp or NEXT Column for the row loop."
+      ]
+    },
+    {
+      "id": "0478/22 F/M/26 - Q5(b) - Pseudocode and Arrays",
+      "short_name": "0478/22 F/M/26 - Q5(b) - Pseudocode and Arrays",
+      "answer_type": "pseudocode",
+      "question": "Write pseudocode for an algorithm, using nested iteration, to output the contents of Names[].\n\nNames[] is a two-dimensional array with 200 rows and 2 columns.",
+      "student_context": "",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 4,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Pseudocode and Arrays",
+      "source": "0478 Computer Science Paper 2 AI-Marked Practice - February/March 2026",
+      "answer_key": "A valid solution uses an outer loop from 1 to 200 and an inner loop from 1 to 2. It outputs Names[Row, Column] or equivalent using the loop counters as array indexes so both columns are output for each row before moving to the next name.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Uses an outer loop with correct limits for the 200 rows."
+        },
+        {
+          "marks": 1,
+          "criterion": "Uses an inner loop with correct limits for the 2 columns."
+        },
+        {
+          "marks": 1,
+          "criterion": "Outputs both corresponding elements from the array before moving to the next name."
+        },
+        {
+          "marks": 1,
+          "criterion": "Uses appropriate loop counter variables for all array indices."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept Row/Column or equivalent counter names.",
+        "Accept valid program code if it clearly uses nested iteration and correct indexes."
+      ],
+      "common_misconceptions": [
+        "Using a single loop and outputting only one column.",
+        "Looping columns from 1 to 200 or rows from 1 to 2.",
+        "Using fixed indexes instead of loop counters."
+      ]
+    },
+    {
+      "id": "0478/22 F/M/26 - Q5(c) - Sorting Algorithms",
+      "short_name": "0478/22 F/M/26 - Q5(c) - Sorting Algorithms",
+      "answer_type": "prose",
+      "question": "A bubble sort algorithm sorts a two-dimensional array Names[] by comparing only the values in the first column. \n\nDescribe a possible problem with the algorithm that could mean the names are not sorted accurately.",
+      "student_context": "",
+      "ai_context": "",
+      "context_image_url": "/uploads/image-1779433655011-20906860.png",
+      "max_marks": 2,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Sorting Algorithms",
+      "source": "0478 Computer Science Paper 2 AI-Marked Practice - February/March 2026",
+      "answer_key": "The algorithm only compares the name in the first column, such as a last name. If several people have the same last name, their first names may not be sorted correctly and those entries may remain in the order they were entered.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that the sort only checks the name in the first column, such as the last name."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that duplicate first-column values could leave first names unsorted or entries in input order."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit answers that explain the need for a secondary sort key.",
+        "Credit examples involving two people with the same surname."
+      ],
+      "common_misconceptions": [
+        "Saying bubble sort cannot sort names at all.",
+        "Only saying the algorithm is inefficient without explaining the accuracy problem."
+      ]
+    },
+    {
+      "id": "0478/22 F/M/26 - Q6(b) - Algorithms",
+      "short_name": "0478/22 F/M/26 - Q6(b) - Algorithms",
+      "answer_type": "prose",
+      "question": "Explain the purpose of the algorithm shown in the flowchart.",
+      "student_context": "",
+      "ai_context": "",
+      "context_image_url": "/uploads/image-1779432913525-403686448.png",
+      "max_marks": 3,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Algorithms",
+      "source": "0478 Computer Science Paper 2 AI-Marked Practice - February/March 2026",
+      "answer_key": "The algorithm calculates or stores the length of the sentence, splits the sentence into separate words by finding spaces, finds the length of each word, and outputs each word with its length.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Mentions calculating or storing the length of the sentence."
+        },
+        {
+          "marks": 1,
+          "criterion": "Mentions dividing the sentence into words or finding spaces between words."
+        },
+        {
+          "marks": 1,
+          "criterion": "Mentions finding the length of each word."
+        },
+        {
+          "marks": 1,
+          "criterion": "Mentions outputting the separate words with their lengths."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 3 marks.",
+        "Credit equivalent descriptions of tokenising a sentence and reporting word lengths."
+      ],
+      "common_misconceptions": [
+        "Saying the algorithm counts the number of sentences.",
+        "Saying the algorithm sorts the words alphabetically."
+      ]
+    },
+    {
+      "id": "0478/22 F/M/26 - Q6(c) - User-Friendly Programs",
+      "short_name": "0478/22 F/M/26 - Q6(c) - User-Friendly Programs",
+      "answer_type": "prose",
+      "question": "An algorithm may be difficult to understand if it is used as a program. \n\nIdentify three improvements that could be made to make the algorithm more user-friendly.",
+      "student_context": "",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 3,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "User-Friendly Programs",
+      "source": "0478 Computer Science Paper 2 AI-Marked Practice - February/March 2026",
+      "answer_key": "The program could add an input prompt so the user knows what to enter, add output messages or headings so the output is clear, and include a repeating loop so the user can process another sentence without restarting the program.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Suggests adding an input prompt so the user knows what to enter."
+        },
+        {
+          "marks": 1,
+          "criterion": "Suggests adding output messages or headings so the output is understandable."
+        },
+        {
+          "marks": 1,
+          "criterion": "Suggests adding repetition so another sentence can be entered without restarting."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit clear equivalent user-interface improvements that make input/output easier to understand."
+      ],
+      "common_misconceptions": [
+        "Suggesting changes that only improve efficiency, not user friendliness.",
+        "Suggesting changes to the algorithm's purpose rather than presentation or interaction."
+      ]
+    },
+    {
+      "id": "0478/22 F/M/26 - Q8(b) - Databases",
+      "short_name": "0478/22 F/M/26 - Q8(b) - Databases",
+      "answer_type": "prose",
+      "question": "The data in both IDCode and Country fields are unique in a database table. \n\nState one reason why IDCode would make a better primary key than Country.",
+      "student_context": "",
+      "ai_context": "",
+      "context_image_url": "/uploads/image-1779432986934-790380850.png",
+      "max_marks": 1,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Databases",
+      "source": "0478 Computer Science Paper 2 AI-Marked Practice - February/March 2026",
+      "answer_key": "IDCode is likely to be shorter or fixed length, making it easier to manage. Also, a country name may not always remain unique because some countries can have more than one national tree.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that IDCode is likely to be shorter than the country name."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that IDCode is a fixed size, making it easier to manage."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that Country may not always be unique because some countries may have more than one national tree."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 1 mark.",
+        "Credit any one valid database reason that clearly favours IDCode as the primary key."
+      ],
+      "common_misconceptions": [
+        "Saying a primary key does not need to be unique.",
+        "Saying Country cannot contain text."
+      ]
+    },
+    {
+      "id": "0478/22 F/M/26 - Q8(d) - SQL",
+      "short_name": "0478/22 F/M/26 - Q8(d) - SQL",
+      "answer_type": "sql",
+      "question": "Complete the SQL statement to list only the country, common name and scientific name of the national trees listed for North America, in alphabetical order of their common names. The table is NATIONAL_TREES and has fields IDCode, Country, Continent, CommonName, ScientificName.",
+      "student_context": "",
+      "ai_context": "",
+      "context_image_url": "",
+      "max_marks": 5,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "SQL",
+      "source": "0478 Computer Science Paper 2 AI-Marked Practice - February/March 2026",
+      "answer_key": "SELECT Country, CommonName, ScientificName FROM NATIONAL_TREES WHERE Continent = \"North America\" ORDER BY CommonName ASC;",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "SELECT includes at least two correct fields from Country, CommonName, ScientificName."
+        },
+        {
+          "marks": 1,
+          "criterion": "SELECT includes the remaining correct field so only Country, CommonName and ScientificName are selected."
+        },
+        {
+          "marks": 1,
+          "criterion": "Uses the correct FROM NATIONAL_TREES clause."
+        },
+        {
+          "marks": 1,
+          "criterion": "Uses the correct WHERE condition for Continent = \"North America\"."
+        },
+        {
+          "marks": 1,
+          "criterion": "Uses ORDER BY CommonName to sort alphabetically by common name."
+        }
+      ],
+      "acceptable_alternatives": [
+        "ASC is optional.",
+        "Accept single quotes around North America.",
+        "Accept harmless capitalization and formatting differences."
+      ],
+      "common_misconceptions": [
+        "Selecting IDCode when only country, common name and scientific name are requested.",
+        "Filtering by Country instead of Continent.",
+        "Ordering by Country instead of CommonName."
+      ]
+    },
+    {
+      "id": "0478/22 F/M/26 - Q9 - Programming Task",
+      "short_name": "0478/22 F/M/26 - Q9 - Programming Task",
+      "answer_type": "pseudocode",
+      "question": "Write a program or pseudocode for a class survey voting system. \nOptions[] stores between 2 and 12 options. \nVotes[] stores votes from between 2 and 1000 voters. \nVoteCount[] stores the number of votes for each option, where the array index represents the option number. \n\nYour solution must initialise arrays, input and validate the number of options and voters, input and store each option, display the list of options for each voter, input and validate each vote, store votes, count votes for each option, find the most and least popular options, and output the most and least popular options with their vote counts. \n\nAdd comments to explain how the code works. Do not declare arrays, variables or constants.",
+      "student_context": "",
+      "ai_context": "",
+      "context_image_url": "/uploads/image-1779433083704-467844588.png",
+      "max_marks": 15,
+      "subject": "Computer Science",
+      "level": "IGCSE",
+      "topic": "Programming Task",
+      "source": "0478 Computer Science Paper 2 AI-Marked Practice - February/March 2026",
+      "answer_key": "A strong solution initialises Options[], Votes[] and VoteCount[], validates option count between 2 and 12 and voter count between 2 and 1000, stores each option, displays all options to each voter, validates each vote against the option range, stores each vote, counts votes for each option, finds maximum and minimum vote counts, and outputs the most and least popular option names with counts. The solution should use appropriate iteration, selection, input, output, arrays/lists, meaningful identifiers and useful comments.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Initialises arrays and inputs/validates the number of options and voters using suitable loops, input, output, selection and validation."
+        },
+        {
+          "marks": 1,
+          "criterion": "Inputs options, stores them in Options[], displays possible options, inputs and validates voters' choices, and stores choices in Votes[]."
+        },
+        {
+          "marks": 1,
+          "criterion": "Counts votes for each option, finds most and least popular options, and outputs both options with vote counts."
+        },
+        {
+          "marks": 1,
+          "criterion": "Uses appropriate data structures including Options[], Votes[] and VoteCount[] or equivalent arrays/lists that store the required data."
+        },
+        {
+          "marks": 1,
+          "criterion": "Uses meaningful identifiers and relevant comments explaining the code."
+        },
+        {
+          "marks": 1,
+          "criterion": "Solution is logically ordered and accurate enough to perform all required tasks, ignoring minor syntax errors."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept pseudocode or program code.",
+        "Do not require handling ties for most or least popular options.",
+        "Ignore minor syntax errors if the algorithm is logically clear."
+      ],
+      "common_misconceptions": [
+        "Not validating option count, voter count or each vote.",
+        "Counting only the final vote instead of all votes.",
+        "Outputting only option numbers without the option names.",
+        "Failing to initialise VoteCount[] before counting."
+      ]
+    }
+  ]
+}

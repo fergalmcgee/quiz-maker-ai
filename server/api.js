@@ -6,6 +6,7 @@ import multer from 'multer';
 import fs from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { analyzeLongAnswerSession, generateLongAnswerHint, isDeepSeekConfigured, markLongAnswer } from './deepseek.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -303,6 +304,1175 @@ router.delete('/classes/:classId/students/:studentId', authorize(['admin', 'teac
             [req.params.classId, req.params.studentId]
         );
         res.json({ message: 'Student removed from class' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- Long Answer Quizzes ---
+
+function safeJsonParse(value, fallback = []) {
+    if (!value) return fallback;
+    if (Array.isArray(value) || typeof value === 'object') return value;
+    try {
+        return JSON.parse(value);
+    } catch {
+        return fallback;
+    }
+}
+
+function normalizeTextArray(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) {
+        return value.map(item => {
+            if (typeof item === 'string') return item.trim();
+            if (item?.criterion) return String(item.criterion).trim();
+            return JSON.stringify(item);
+        }).filter(Boolean);
+    }
+    return String(value)
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean);
+}
+
+function normalizeMarkScheme(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) {
+        return value.map(item => {
+            if (typeof item === 'string') return { marks: 1, criterion: item };
+            return {
+                marks: Math.max(1, Number.parseInt(item.marks ?? item.points ?? 1, 10) || 1),
+                criterion: String(item.criterion || item.text || item.description || '').trim()
+            };
+        }).filter(item => item.criterion);
+    }
+    return normalizeTextArray(value).map(line => ({ marks: 1, criterion: line }));
+}
+
+function normalizeAnswerType(value) {
+    const normalized = String(value || 'prose').trim().toLowerCase().replace(/[^a-z_]/g, '_');
+    return ['prose', 'pseudocode', 'sql'].includes(normalized) ? normalized : 'prose';
+}
+
+function getAiErrorResponse(error, fallbackAction = 'AI request') {
+    const isAnalysis = fallbackAction === 'AI analysis';
+    if (error.code === 'DEEPSEEK_NOT_CONFIGURED') {
+        return {
+            status: 503,
+            error: `${fallbackAction} is not configured yet.`
+        };
+    }
+    if (error.code === 'DEEPSEEK_TIMEOUT') {
+        return {
+            status: 503,
+            error: isAnalysis
+                ? 'The AI analysis did not respond in time. Please try again.'
+                : 'The AI marker did not respond in time. Your answer was not marked. Please try again.'
+        };
+    }
+    if (error.code === 'DEEPSEEK_CONNECTION_FAILED') {
+        return {
+            status: 503,
+            error: isAnalysis
+                ? 'Could not connect to the AI analysis service. Please check the internet connection and try again.'
+                : 'Could not connect to the AI marker. Please check the internet connection and try again.'
+        };
+    }
+    if (error.code === 'DEEPSEEK_REQUEST_FAILED') {
+        return {
+            status: error.status === 401 ? 503 : (error.status || 503),
+            error: error.status === 401
+                ? 'The AI marker rejected the API key. Please ask the teacher to check the DeepSeek key.'
+                : `The AI marker returned an error: ${error.message}`
+        };
+    }
+    if (error.message?.includes('non-JSON') || error.message?.includes('valid whole-number score')) {
+        return {
+            status: 502,
+            error: isAnalysis
+                ? 'The AI analysis returned an unexpected response. Please try again.'
+                : 'The AI marker returned an unexpected response. Your answer was not marked. Please try again.'
+        };
+    }
+    return null;
+}
+
+function flattenLongAnswerQuestions(payload) {
+    if (Array.isArray(payload?.questions)) return payload.questions;
+
+    if (payload?.topics && typeof payload.topics === 'object') {
+        const questions = [];
+        for (const [topicName, groups] of Object.entries(payload.topics)) {
+            const groupList = Array.isArray(groups) ? groups : [];
+            for (const group of groupList) {
+                const groupQuestions = Array.isArray(group.questions) ? group.questions : [];
+                groupQuestions.forEach(question => {
+                    questions.push({
+                        ...question,
+                        topic: question.topic || topicName,
+                        tags: [...(group.tags || []), ...(question.tags || [])]
+                    });
+                });
+            }
+        }
+        return questions;
+    }
+
+    return [];
+}
+
+function normalizeLongAnswerQuestion(question, index, fallbackTopic = 'General') {
+    const questionText = String(question.question || question.question_text || question.text || '').trim();
+    const maxMarks = Math.max(1, Number.parseInt(question.max_marks ?? question.points ?? question.marks ?? 1, 10) || 1);
+    const fallbackShortName = question.topic || (question.id ? String(question.id).trim() : `Question ${index + 1}`);
+    return {
+        id: question.id,
+        bank_question_id: question.bank_question_id || question.bankQuestionId || null,
+        short_name: String(question.short_name || question.name || question.title || fallbackShortName).trim(),
+        answer_type: normalizeAnswerType(question.answer_type || question.type),
+        question_text: questionText,
+        student_context: String(question.student_context || question.context || question.source_material || '').trim(),
+        ai_context: String(question.ai_context || '').trim(),
+        context_image_url: String(question.context_image_url || question.image_url || '').trim(),
+        max_marks: maxMarks,
+        answer_key: String(question.answer_key || question.answer || question.model_answer || '').trim(),
+        mark_scheme: normalizeMarkScheme(question.mark_scheme || question.rubric || question.criteria),
+        acceptable_alternatives: normalizeTextArray(question.acceptable_alternatives || question.acceptable_answers || question.alternatives),
+        common_misconceptions: normalizeTextArray(question.common_misconceptions || question.misconceptions),
+        subject: String(question.subject || '').trim(),
+        level: String(question.level || '').trim(),
+        topic: String(question.topic || fallbackTopic || 'General').trim() || 'General',
+        source: typeof question.source === 'string' ? question.source.trim() : '',
+        order_idx: Number.parseInt(question.order_idx ?? index, 10) || index
+    };
+}
+
+function serializeLongAnswerQuestion(row, includePrivate = false) {
+    const base = {
+        id: row.id,
+        quiz_id: row.quiz_id,
+        bank_question_id: row.bank_question_id || null,
+        short_name: row.short_name || row.topic || `Question ${(Number.parseInt(row.order_idx, 10) || 0) + 1}`,
+        answer_type: row.answer_type || 'prose',
+        question_text: row.question_text,
+        student_context: row.student_context || '',
+        context_image_url: row.context_image_url || '',
+        max_marks: row.max_marks,
+        topic: row.topic,
+        order_idx: row.order_idx
+    };
+
+    if (includePrivate) {
+        return {
+            ...base,
+            ai_context: row.ai_context || '',
+            answer_key: row.answer_key || '',
+            mark_scheme: safeJsonParse(row.mark_scheme, []),
+            acceptable_alternatives: safeJsonParse(row.acceptable_alternatives, []),
+            common_misconceptions: safeJsonParse(row.common_misconceptions, [])
+        };
+    }
+
+    return base;
+}
+
+function serializeLongAnswerSession(row) {
+    if (!row) return row;
+    const session = { ...row };
+    delete session.ai_analysis;
+    return session;
+}
+
+function serializeLongAnswerBankQuestion(row) {
+    return {
+        id: row.id,
+        short_name: row.short_name || row.topic || `Question ${row.id}`,
+        answer_type: row.answer_type || 'prose',
+        question_text: row.question_text,
+        student_context: row.student_context || '',
+        ai_context: row.ai_context || '',
+        context_image_url: row.context_image_url || '',
+        max_marks: row.max_marks,
+        answer_key: row.answer_key || '',
+        mark_scheme: safeJsonParse(row.mark_scheme, []),
+        acceptable_alternatives: safeJsonParse(row.acceptable_alternatives, []),
+        common_misconceptions: safeJsonParse(row.common_misconceptions, []),
+        subject: row.subject || 'General',
+        level: row.level || 'General',
+        topic: row.topic || 'General',
+        source: row.source || '',
+        is_archived: row.is_archived || 0,
+        created_by: row.created_by || null,
+        created_at: row.created_at,
+        updated_at: row.updated_at
+    };
+}
+
+function bankQuestionToSnapshot(row, index) {
+    return {
+        bank_question_id: row.id,
+        short_name: row.short_name || `Question ${index + 1}`,
+        answer_type: row.answer_type || 'prose',
+        question_text: row.question_text,
+        student_context: row.student_context || '',
+        ai_context: row.ai_context || '',
+        context_image_url: row.context_image_url || '',
+        max_marks: row.max_marks,
+        answer_key: row.answer_key || '',
+        mark_scheme: safeJsonParse(row.mark_scheme, []),
+        acceptable_alternatives: safeJsonParse(row.acceptable_alternatives, []),
+        common_misconceptions: safeJsonParse(row.common_misconceptions, []),
+        topic: row.topic || 'General',
+        order_idx: index
+    };
+}
+
+async function canTeacherManageLongAnswerQuiz(quizId, teacherId) {
+    const row = await queryDb.get(
+        'SELECT id FROM long_answer_quizzes WHERE id = ? AND teacher_id = ?',
+        [quizId, teacherId]
+    );
+    return !!row;
+}
+
+async function getLongAnswerQuestionForMarking(sessionId, questionId, studentId = null) {
+    const params = [sessionId, questionId];
+    let studentJoin = '';
+    let notSubmitted = '';
+    if (studentId) {
+        studentJoin = 'JOIN class_students cs ON cs.class_id = las.class_id AND cs.student_id = ?';
+        notSubmitted = `
+            AND NOT EXISTS (
+                SELECT 1
+                FROM long_answer_submissions submission
+                WHERE submission.session_id = las.id AND submission.student_id = ?
+            )
+        `;
+    }
+
+    return queryDb.get(`
+        SELECT laq.*
+        FROM long_answer_sessions las
+        JOIN long_answer_questions laq ON laq.quiz_id = las.quiz_id
+        ${studentJoin}
+        WHERE las.id = ? AND laq.id = ? AND las.status = 'active'
+        ${notSubmitted}
+    `, studentId ? [studentId, sessionId, questionId, studentId] : params);
+}
+
+async function getLongAnswerQuestionSnapshot(sessionId, questionId) {
+    return queryDb.get(`
+        SELECT laq.*
+        FROM long_answer_sessions las
+        JOIN long_answer_questions laq ON laq.quiz_id = las.quiz_id
+        WHERE las.id = ? AND laq.id = ?
+    `, [sessionId, questionId]);
+}
+
+async function saveLongAnswerResponse({ sessionId, questionId, studentId, answerText, aiResult = null, markingPending = false }) {
+    const aiScore = aiResult ? aiResult.score : null;
+    const aiFeedback = aiResult
+        ? aiResult.feedback
+        : markingPending ? 'AI marking is still running.' : null;
+    const aiImprovements = aiResult ? aiResult.improvements : [];
+    const aiConfidence = aiResult
+        ? aiResult.confidence
+        : markingPending ? 'pending' : null;
+    const aiRaw = aiResult ? aiResult.raw : null;
+
+    return queryDb.run(`
+        INSERT INTO long_answer_responses
+            (session_id, question_id, student_id, answer_text, ai_score, ai_feedback, ai_improvements, ai_confidence, ai_raw, submitted_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT(session_id, question_id, student_id) DO UPDATE SET
+            answer_text = excluded.answer_text,
+            ai_score = excluded.ai_score,
+            ai_feedback = excluded.ai_feedback,
+            ai_improvements = excluded.ai_improvements,
+            ai_confidence = excluded.ai_confidence,
+            ai_raw = excluded.ai_raw,
+            teacher_score = NULL,
+            teacher_feedback = NULL,
+            submitted_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+    `, [
+        sessionId,
+        questionId,
+        studentId,
+        answerText,
+        aiScore,
+        aiFeedback,
+        JSON.stringify(aiImprovements),
+        aiConfidence,
+        aiRaw ? JSON.stringify(aiRaw) : null
+    ]);
+}
+
+async function markSavedLongAnswerResponse({ sessionId, questionId, studentId, answerText }) {
+    try {
+        const question = await getLongAnswerQuestionSnapshot(sessionId, questionId);
+        if (!question) return;
+
+        const aiResult = await markLongAnswer({ question, answerText });
+        await queryDb.run(`
+            UPDATE long_answer_responses
+            SET ai_score = ?,
+                ai_feedback = ?,
+                ai_improvements = ?,
+                ai_confidence = ?,
+                ai_raw = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE session_id = ?
+              AND question_id = ?
+              AND student_id = ?
+              AND answer_text = ?
+        `, [
+            aiResult.score,
+            aiResult.feedback,
+            JSON.stringify(aiResult.improvements),
+            aiResult.confidence,
+            JSON.stringify(aiResult.raw),
+            sessionId,
+            questionId,
+            studentId,
+            answerText
+        ]);
+    } catch (error) {
+        const message = error?.message || 'Unknown AI marking error';
+        console.error('Background long-answer marking failed:', message);
+        await queryDb.run(`
+            UPDATE long_answer_responses
+            SET ai_feedback = ?,
+                ai_improvements = ?,
+                ai_confidence = 'error',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE session_id = ?
+              AND question_id = ?
+              AND student_id = ?
+              AND answer_text = ?
+              AND ai_confidence = 'pending'
+        `, [
+            `AI marking failed in the background: ${message}`,
+            JSON.stringify([]),
+            sessionId,
+            questionId,
+            studentId,
+            answerText
+        ]);
+    }
+}
+
+async function getLongAnswerSessionForUser(sessionId, user) {
+    if (user.role === 'admin') {
+        return queryDb.get('SELECT * FROM long_answer_sessions WHERE id = ?', [sessionId]);
+    }
+    if (user.role === 'teacher') {
+        return queryDb.get('SELECT * FROM long_answer_sessions WHERE id = ? AND teacher_id = ?', [sessionId, user.id]);
+    }
+    return queryDb.get(`
+        SELECT las.*
+        FROM long_answer_sessions las
+        JOIN class_students cs ON cs.class_id = las.class_id
+        WHERE las.id = ? AND cs.student_id = ?
+    `, [sessionId, user.id]);
+}
+
+router.get('/long-answer/config', authorize(['admin', 'teacher', 'student']), async (_req, res) => {
+    res.json({
+        deepseekConfigured: isDeepSeekConfigured(),
+        model: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro'
+    });
+});
+
+router.get('/long-answer/bank/questions', authorize(['teacher', 'admin']), async (req, res) => {
+    const { subject, level, topic, type, q } = req.query;
+    try {
+        let sql = `
+            SELECT labq.*, u.username as created_by_name
+            FROM long_answer_bank_questions labq
+            LEFT JOIN users u ON u.id = labq.created_by
+            WHERE labq.is_archived = 0
+        `;
+        const params = [];
+
+        if (subject) {
+            sql += ' AND labq.subject = ?';
+            params.push(subject);
+        }
+        if (level) {
+            sql += ' AND labq.level = ?';
+            params.push(level);
+        }
+        if (topic) {
+            sql += ' AND labq.topic = ?';
+            params.push(topic);
+        }
+        if (type && ['prose', 'pseudocode', 'sql'].includes(String(type))) {
+            sql += ' AND labq.answer_type = ?';
+            params.push(type);
+        }
+        if (q && String(q).trim()) {
+            sql += ' AND (labq.short_name LIKE ? OR labq.question_text LIKE ? OR labq.student_context LIKE ? OR labq.topic LIKE ?)';
+            const term = `%${String(q).trim()}%`;
+            params.push(term, term, term, term);
+        }
+
+        sql += " ORDER BY labq.subject ASC, labq.level ASC, COALESCE(NULLIF(labq.short_name, ''), labq.topic) ASC, labq.id ASC LIMIT 500";
+
+        const rows = await queryDb.all(sql, params);
+        res.json(rows.map(serializeLongAnswerBankQuestion));
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/admin/long-answer/bank/import', authorize(['admin']), async (req, res) => {
+    const source = req.body.source || req.body;
+    const questionsInput = flattenLongAnswerQuestions(source);
+    const subject = String(req.body.subject || source.subject || 'General').trim() || 'General';
+    const level = String(req.body.level || source.level || 'General').trim() || 'General';
+    const topic = String(req.body.topic || source.topic || 'General').trim() || 'General';
+    const sourceName = String(req.body.sourceName || source.title || source.name || '').trim();
+
+    if (!questionsInput.length) return res.status(400).json({ error: 'At least one long-answer question is required' });
+
+    const normalizedQuestions = questionsInput
+        .map((question, index) => normalizeLongAnswerQuestion(question, index, question.topic || topic))
+        .filter(question => question.question_text && (question.answer_key || question.mark_scheme.length));
+
+    if (!normalizedQuestions.length) {
+        return res.status(400).json({ error: 'No valid questions found. Each question needs question text plus an answer key or mark scheme.' });
+    }
+
+    try {
+        let imported = 0;
+        for (const question of normalizedQuestions) {
+            await queryDb.run(`
+                INSERT INTO long_answer_bank_questions
+                    (created_by, short_name, answer_type, question_text, student_context, ai_context, context_image_url, max_marks, answer_key, mark_scheme, acceptable_alternatives, common_misconceptions, subject, level, topic, source)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                req.user.id,
+                question.short_name,
+                question.answer_type,
+                question.question_text,
+                question.student_context,
+                question.ai_context,
+                question.context_image_url,
+                question.max_marks,
+                question.answer_key,
+                JSON.stringify(question.mark_scheme),
+                JSON.stringify(question.acceptable_alternatives),
+                JSON.stringify(question.common_misconceptions),
+                question.subject || subject,
+                question.level || level,
+                question.topic || topic,
+                question.source || sourceName
+            ]);
+            imported += 1;
+        }
+
+        await logAuditEvent({
+            actorId: req.user.id,
+            actorRole: req.user.role,
+            action: 'long_answer_bank_imported',
+            targetType: 'long_answer_bank',
+            details: { imported, subject, level, topic, source: sourceName }
+        });
+
+        res.json({ message: 'Long-answer bank questions imported', questionsImported: imported });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/admin/long-answer/bank/questions', authorize(['admin']), async (req, res) => {
+    const question = normalizeLongAnswerQuestion(req.body, 0, req.body.topic || 'General');
+    const subject = String(req.body.subject || 'General').trim() || 'General';
+    const level = String(req.body.level || 'General').trim() || 'General';
+    const source = String(req.body.source || '').trim();
+
+    if (!question.question_text) return res.status(400).json({ error: 'Question text is required' });
+    if (!question.answer_key && !question.mark_scheme.length) {
+        return res.status(400).json({ error: 'Answer key or mark scheme is required' });
+    }
+
+    try {
+        const result = await queryDb.run(`
+            INSERT INTO long_answer_bank_questions
+                (created_by, short_name, answer_type, question_text, student_context, ai_context, context_image_url, max_marks, answer_key, mark_scheme, acceptable_alternatives, common_misconceptions, subject, level, topic, source)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            req.user.id,
+            question.short_name,
+            question.answer_type,
+            question.question_text,
+            question.student_context,
+            question.ai_context,
+            question.context_image_url,
+            question.max_marks,
+            question.answer_key,
+            JSON.stringify(question.mark_scheme),
+            JSON.stringify(question.acceptable_alternatives),
+            JSON.stringify(question.common_misconceptions),
+            subject,
+            level,
+            question.topic,
+            source
+        ]);
+
+        const saved = await queryDb.get('SELECT * FROM long_answer_bank_questions WHERE id = ?', [result.id]);
+        res.json({ question: serializeLongAnswerBankQuestion(saved) });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.put('/admin/long-answer/bank/questions/:questionId', authorize(['admin']), async (req, res) => {
+    const question = normalizeLongAnswerQuestion(req.body, 0, req.body.topic || 'General');
+    const subject = String(req.body.subject || 'General').trim() || 'General';
+    const level = String(req.body.level || 'General').trim() || 'General';
+    const source = String(req.body.source || '').trim();
+
+    if (!question.question_text) return res.status(400).json({ error: 'Question text is required' });
+    if (!question.answer_key && !question.mark_scheme.length) {
+        return res.status(400).json({ error: 'Answer key or mark scheme is required' });
+    }
+
+    try {
+        const existing = await queryDb.get('SELECT id FROM long_answer_bank_questions WHERE id = ? AND is_archived = 0', [req.params.questionId]);
+        if (!existing) return res.status(404).json({ error: 'Question not found' });
+
+        await queryDb.run(`
+            UPDATE long_answer_bank_questions
+            SET short_name = ?, answer_type = ?, question_text = ?, student_context = ?, ai_context = ?, context_image_url = ?,
+                max_marks = ?, answer_key = ?, mark_scheme = ?, acceptable_alternatives = ?,
+                common_misconceptions = ?, subject = ?, level = ?, topic = ?, source = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `, [
+            question.short_name,
+            question.answer_type,
+            question.question_text,
+            question.student_context,
+            question.ai_context,
+            question.context_image_url,
+            question.max_marks,
+            question.answer_key,
+            JSON.stringify(question.mark_scheme),
+            JSON.stringify(question.acceptable_alternatives),
+            JSON.stringify(question.common_misconceptions),
+            subject,
+            level,
+            question.topic,
+            source,
+            req.params.questionId
+        ]);
+
+        const saved = await queryDb.get('SELECT * FROM long_answer_bank_questions WHERE id = ?', [req.params.questionId]);
+        res.json({ question: serializeLongAnswerBankQuestion(saved) });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.put('/admin/long-answer/bank/questions/:questionId/archive', authorize(['admin']), async (req, res) => {
+    try {
+        await queryDb.run('UPDATE long_answer_bank_questions SET is_archived = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [req.params.questionId]);
+        res.json({ message: 'Long-answer bank question archived' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/long-answer/quizzes', authorize(['teacher', 'admin']), async (req, res) => {
+    try {
+        const params = [];
+        let where = 'WHERE laq.is_archived = 0';
+        if (req.user.role === 'teacher') {
+            where += ' AND laq.teacher_id = ?';
+            params.push(req.user.id);
+        }
+
+        const rows = await queryDb.all(`
+            SELECT laq.*, COUNT(q.id) as question_count
+            FROM long_answer_quizzes laq
+            LEFT JOIN long_answer_questions q ON q.quiz_id = laq.id
+            ${where}
+            GROUP BY laq.id
+            ORDER BY datetime(laq.created_at) DESC, laq.id DESC
+        `, params);
+        res.json(rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/long-answer/quizzes', authorize(['teacher', 'admin']), async (req, res) => {
+    const source = req.body.source || req.body;
+    const bankQuestionIds = Array.isArray(req.body.bankQuestionIds || req.body.questionIds)
+        ? (req.body.bankQuestionIds || req.body.questionIds)
+            .map(id => Number.parseInt(id, 10))
+            .filter(Number.isFinite)
+        : [];
+    const questionsInput = bankQuestionIds.length ? [] : flattenLongAnswerQuestions(source);
+    const title = String(req.body.title || source.title || source.name || 'Long Answer Quiz').trim();
+    const description = String(req.body.description || source.description || '').trim();
+    const subject = String(req.body.subject || source.subject || 'General').trim() || 'General';
+    const level = String(req.body.level || source.level || 'General').trim() || 'General';
+    const topic = String(req.body.topic || source.topic || 'General').trim() || 'General';
+
+    if (!title) return res.status(400).json({ error: 'Title is required' });
+    if (!questionsInput.length && !bankQuestionIds.length) return res.status(400).json({ error: 'At least one long-answer question is required' });
+    if (!bankQuestionIds.length && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Teachers can build long-answer quizzes from the approved question bank. Ask an admin to add or edit bank questions.' });
+    }
+
+    let normalizedQuestions = [];
+
+    if (!bankQuestionIds.length) {
+        normalizedQuestions = questionsInput
+            .map((question, index) => normalizeLongAnswerQuestion(question, index, topic))
+            .filter(question => question.question_text && (question.answer_key || question.mark_scheme.length));
+
+        if (!normalizedQuestions.length) {
+            return res.status(400).json({ error: 'No valid questions found. Each question needs question text plus an answer key or mark scheme.' });
+        }
+    }
+
+    try {
+        if (bankQuestionIds.length) {
+            const placeholders = bankQuestionIds.map(() => '?').join(',');
+            const bankRows = await queryDb.all(
+                `SELECT * FROM long_answer_bank_questions WHERE id IN (${placeholders}) AND is_archived = 0`,
+                bankQuestionIds
+            );
+            const byId = new Map(bankRows.map(row => [Number(row.id), row]));
+            normalizedQuestions = bankQuestionIds
+                .map((id, index) => byId.has(id) ? bankQuestionToSnapshot(byId.get(id), index) : null)
+                .filter(Boolean);
+
+            if (!normalizedQuestions.length) {
+                return res.status(400).json({ error: 'No valid approved bank questions were found.' });
+            }
+        }
+
+        const quizResult = await queryDb.run(`
+            INSERT INTO long_answer_quizzes (teacher_id, title, description, subject, level, topic, source_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `, [req.user.id, title, description, subject, level, topic, JSON.stringify(source)]);
+
+        for (const question of normalizedQuestions) {
+            await queryDb.run(`
+                INSERT INTO long_answer_questions
+                    (quiz_id, bank_question_id, short_name, answer_type, question_text, student_context, ai_context, context_image_url, max_marks, answer_key, mark_scheme, acceptable_alternatives, common_misconceptions, topic, order_idx)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                quizResult.id,
+                question.bank_question_id || null,
+                question.short_name || '',
+                question.answer_type,
+                question.question_text,
+                question.student_context || '',
+                question.ai_context || '',
+                question.context_image_url || '',
+                question.max_marks,
+                question.answer_key,
+                JSON.stringify(question.mark_scheme),
+                JSON.stringify(question.acceptable_alternatives),
+                JSON.stringify(question.common_misconceptions),
+                question.topic,
+                question.order_idx
+            ]);
+        }
+
+        await logAuditEvent({
+            actorId: req.user.id,
+            actorRole: req.user.role,
+            action: 'long_answer_quiz_created',
+            targetType: 'long_answer_quiz',
+            targetId: quizResult.id,
+            details: { title, question_count: normalizedQuestions.length }
+        });
+
+        res.json({ id: quizResult.id, title, questionsImported: normalizedQuestions.length });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/long-answer/quizzes/:quizId', authorize(['teacher', 'admin']), async (req, res) => {
+    try {
+        if (req.user.role === 'teacher' && !(await canTeacherManageLongAnswerQuiz(req.params.quizId, req.user.id))) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const quiz = await queryDb.get('SELECT * FROM long_answer_quizzes WHERE id = ?', [req.params.quizId]);
+        if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+        const questions = await queryDb.all(
+            'SELECT * FROM long_answer_questions WHERE quiz_id = ? ORDER BY order_idx ASC, id ASC',
+            [req.params.quizId]
+        );
+        res.json({ ...quiz, questions: questions.map(question => serializeLongAnswerQuestion(question, true)) });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.put('/long-answer/quizzes/:quizId/archive', authorize(['teacher', 'admin']), async (req, res) => {
+    try {
+        if (req.user.role === 'teacher' && !(await canTeacherManageLongAnswerQuiz(req.params.quizId, req.user.id))) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+        await queryDb.run('UPDATE long_answer_quizzes SET is_archived = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [req.params.quizId]);
+        res.json({ message: 'Long-answer quiz archived' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/long-answer/sessions/teacher', authorize(['teacher', 'admin']), async (req, res) => {
+    try {
+        const params = [];
+        let where = 'WHERE las.status != "archived"';
+        if (req.user.role === 'teacher') {
+            where += ' AND las.teacher_id = ?';
+            params.push(req.user.id);
+        }
+
+        const sessions = await queryDb.all(`
+            SELECT las.*, laq.title as quiz_title, c.name as class_name,
+                   COUNT(DISTINCT cs.student_id) as total_students,
+                   COUNT(DISTINCT submission.student_id) as submitted_students
+            FROM long_answer_sessions las
+            JOIN long_answer_quizzes laq ON laq.id = las.quiz_id
+            LEFT JOIN classes c ON c.id = las.class_id
+            LEFT JOIN class_students cs ON cs.class_id = las.class_id
+            LEFT JOIN long_answer_submissions submission ON submission.session_id = las.id
+            ${where}
+            GROUP BY las.id
+            ORDER BY datetime(las.created_at) DESC, las.id DESC
+        `, params);
+        res.json(sessions.map(serializeLongAnswerSession));
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/long-answer/sessions', authorize(['teacher', 'admin']), async (req, res) => {
+    const { quizId, classId, name, mode = 'async', releaseFeedback = false, allowAiHints = true, expiresAt = null } = req.body;
+    if (!quizId || !classId) return res.status(400).json({ error: 'Quiz and class are required' });
+
+    try {
+        if (req.user.role === 'teacher') {
+            if (!(await canTeacherManageLongAnswerQuiz(quizId, req.user.id))) {
+                return res.status(403).json({ error: 'Forbidden' });
+            }
+            const ownedClass = await queryDb.get('SELECT id FROM classes WHERE id = ? AND teacher_id = ?', [classId, req.user.id]);
+            if (!ownedClass) return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const result = await queryDb.run(`
+            INSERT INTO long_answer_sessions (quiz_id, teacher_id, class_id, name, mode, status, release_feedback, allow_ai_hints, expires_at)
+            SELECT ?, ?, ?, ?, ?, 'active', ?, ?, ?
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM long_answer_sessions
+                WHERE quiz_id = ? AND class_id = ? AND status = 'active'
+            )
+        `, [
+            quizId,
+            req.user.id,
+            classId,
+            String(name || '').trim() || null,
+            ['live', 'async'].includes(mode) ? mode : 'async',
+            releaseFeedback ? 1 : 0,
+            allowAiHints ? 1 : 0,
+            expiresAt || null,
+            quizId,
+            classId
+        ]);
+        if (result.changes === 0) {
+            return res.status(409).json({
+                error: 'This quiz is already assigned to this class in an active session. Close the existing session before assigning it again.'
+            });
+        }
+
+        res.json({ id: result.id, sessionId: result.id });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/long-answer/sessions/student/:studentId', authorize(['student', 'teacher', 'admin']), async (req, res) => {
+    if (req.user.role === 'student' && String(req.user.id) !== String(req.params.studentId)) {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    try {
+        const sessions = await queryDb.all(`
+            SELECT las.*, laq.title as quiz_title, laq.subject, laq.level, laq.topic, c.name as class_name,
+                   u.username as teacher_name,
+                   COUNT(q.id) as question_count,
+                   COUNT(r.id) as response_count,
+                   CASE WHEN submission.student_id IS NULL OR COALESCE(las.release_feedback, 0) != 1
+                       THEN NULL
+                       ELSE SUM(COALESCE(r.ai_score, 0))
+                   END as ai_total,
+                   CASE WHEN submission.student_id IS NULL OR COALESCE(las.release_feedback, 0) != 1
+                       THEN NULL
+                       ELSE SUM(COALESCE(r.teacher_score, r.ai_score, 0))
+                   END as score_total,
+                   SUM(q.max_marks) as max_total,
+                   CASE WHEN submission.student_id IS NULL THEN 0 ELSE 1 END as is_submitted,
+                   submission.submitted_at as completed_at
+            FROM long_answer_sessions las
+            JOIN long_answer_quizzes laq ON laq.id = las.quiz_id
+            JOIN classes c ON c.id = las.class_id
+            JOIN class_students cs ON cs.class_id = c.id
+            JOIN users u ON u.id = las.teacher_id
+            LEFT JOIN long_answer_questions q ON q.quiz_id = laq.id
+            LEFT JOIN long_answer_responses r
+                ON r.session_id = las.id
+               AND r.question_id = q.id
+               AND r.student_id = cs.student_id
+            LEFT JOIN long_answer_submissions submission
+                ON submission.session_id = las.id
+               AND submission.student_id = cs.student_id
+            WHERE cs.student_id = ? AND las.status != 'archived'
+            GROUP BY las.id
+            ORDER BY datetime(las.created_at) DESC, las.id DESC
+        `, [req.params.studentId]);
+        res.json(sessions.map(serializeLongAnswerSession));
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/long-answer/sessions/:sessionId', authorize(['student', 'teacher', 'admin']), async (req, res) => {
+    try {
+        const session = await getLongAnswerSessionForUser(req.params.sessionId, req.user);
+        if (!session) return res.status(404).json({ error: 'Session not found' });
+
+        const quiz = await queryDb.get('SELECT * FROM long_answer_quizzes WHERE id = ?', [session.quiz_id]);
+        const includePrivate = req.user.role === 'admin' || String(session.teacher_id) === String(req.user.id);
+        const questionRows = await queryDb.all(
+            'SELECT * FROM long_answer_questions WHERE quiz_id = ? ORDER BY order_idx ASC, id ASC',
+            [session.quiz_id]
+        );
+        const questions = questionRows.map(question => serializeLongAnswerQuestion(question, includePrivate));
+        const savedAnalysis = includePrivate ? safeJsonParse(session.ai_analysis, null) : null;
+
+        let responses;
+        let studentRoster = [];
+        let submission = null;
+        let feedbackReleased = Number(session.release_feedback) === 1;
+        if (includePrivate) {
+            responses = await queryDb.all(`
+                SELECT r.*, u.username as student_name
+                FROM long_answer_responses r
+                JOIN users u ON u.id = r.student_id
+                WHERE r.session_id = ?
+                ORDER BY datetime(r.submitted_at) DESC, r.id DESC
+            `, [session.id]);
+            if (session.class_id) {
+                studentRoster = await queryDb.all(`
+                    SELECT u.id as student_id,
+                           u.username as student_name,
+                           u.form_class,
+                           submission.submitted_at,
+                           COUNT(r.id) as response_count
+                    FROM class_students cs
+                    JOIN users u ON u.id = cs.student_id
+                    LEFT JOIN long_answer_submissions submission
+                        ON submission.session_id = ?
+                       AND submission.student_id = u.id
+                    LEFT JOIN long_answer_responses r
+                        ON r.session_id = ?
+                       AND r.student_id = u.id
+                    WHERE cs.class_id = ?
+                    GROUP BY u.id
+                    ORDER BY u.username COLLATE NOCASE ASC
+                `, [session.id, session.id, session.class_id]);
+            }
+        } else {
+            submission = await queryDb.get(
+                'SELECT submitted_at FROM long_answer_submissions WHERE session_id = ? AND student_id = ?',
+                [session.id, req.user.id]
+            );
+            feedbackReleased = feedbackReleased && !!submission;
+            responses = await queryDb.all(`
+                SELECT id, session_id, question_id, student_id, answer_text,
+                       ${feedbackReleased ? `
+                           ai_score, ai_feedback, ai_improvements, ai_confidence,
+                           teacher_score, teacher_feedback,
+                       ` : ''}
+                       submitted_at, updated_at
+                FROM long_answer_responses
+                WHERE session_id = ? AND student_id = ?
+            `, [session.id, req.user.id]);
+        }
+
+        res.json({
+            session: serializeLongAnswerSession(session),
+            quiz,
+            questions,
+            responses,
+            studentRoster,
+            submission,
+            feedbackReleased,
+            savedAnalysis
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/long-answer/sessions/:sessionId/analyze', authorize(['teacher', 'admin']), async (req, res) => {
+    try {
+        const session = await getLongAnswerSessionForUser(req.params.sessionId, req.user);
+        if (!session) return res.status(404).json({ error: 'Session not found' });
+
+        const quiz = await queryDb.get('SELECT * FROM long_answer_quizzes WHERE id = ?', [session.quiz_id]);
+        const questions = await queryDb.all(
+            'SELECT * FROM long_answer_questions WHERE quiz_id = ? ORDER BY order_idx ASC, id ASC',
+            [session.quiz_id]
+        );
+        const responses = await queryDb.all(`
+            SELECT question_id, answer_text, ai_score, ai_feedback, ai_improvements, teacher_score
+            FROM long_answer_responses
+            WHERE session_id = ?
+            ORDER BY question_id ASC, id ASC
+        `, [session.id]);
+
+        if (responses.length === 0) {
+            return res.status(400).json({ error: 'There are no student responses to analyze yet.' });
+        }
+
+        const analysis = await analyzeLongAnswerSession({ quiz, questions, responses });
+        const savedAnalysis = {
+            ...analysis,
+            responseCount: responses.length,
+            questionCount: questions.length,
+            generatedAt: new Date().toISOString()
+        };
+        await queryDb.run(
+            'UPDATE long_answer_sessions SET ai_analysis = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [JSON.stringify(savedAnalysis), session.id]
+        );
+        res.json(savedAnalysis);
+    } catch (error) {
+        const aiError = getAiErrorResponse(error, 'AI analysis');
+        if (aiError) return res.status(aiError.status).json({ error: aiError.error });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/long-answer/sessions/:sessionId/questions/:questionId/help', authorize(['student']), async (req, res) => {
+    const { answerText = '' } = req.body;
+    try {
+        const session = await getLongAnswerSessionForUser(req.params.sessionId, req.user);
+        if (!session) return res.status(404).json({ error: 'Session not found' });
+        if (Number(session.allow_ai_hints) !== 1) {
+            return res.status(403).json({ error: 'AI hints are disabled for this quiz.' });
+        }
+        const question = await getLongAnswerQuestionForMarking(req.params.sessionId, req.params.questionId, req.user.id);
+        if (!question) return res.status(404).json({ error: 'Question not found or not available' });
+
+        const hint = await generateLongAnswerHint({ question, answerText });
+        await queryDb.run(`
+            INSERT INTO long_answer_help_logs (session_id, question_id, student_id, answer_text, hint_text)
+            VALUES (?, ?, ?, ?, ?)
+        `, [req.params.sessionId, req.params.questionId, req.user.id, answerText, hint.hint]);
+        res.json(hint);
+    } catch (error) {
+        const aiError = getAiErrorResponse(error, 'AI help');
+        if (aiError) return res.status(aiError.status).json({ error: aiError.error });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/long-answer/sessions/:sessionId/questions/:questionId/submit', authorize(['student']), async (req, res) => {
+    const answerText = String(req.body.answerText || '').trim();
+    if (!answerText) return res.status(400).json({ error: 'Answer text is required' });
+
+    try {
+        const session = await getLongAnswerSessionForUser(req.params.sessionId, req.user);
+        if (!session) return res.status(404).json({ error: 'Session not found' });
+
+        const question = await getLongAnswerQuestionForMarking(req.params.sessionId, req.params.questionId, req.user.id);
+        if (!question) return res.status(404).json({ error: 'Question not found or not available' });
+
+        const completedSubmission = await queryDb.get(
+            'SELECT id FROM long_answer_submissions WHERE session_id = ? AND student_id = ?',
+            [req.params.sessionId, req.user.id]
+        );
+        if (completedSubmission) {
+            return res.status(409).json({ error: 'This quiz has already been submitted. Answers can no longer be changed.' });
+        }
+
+        const feedbackIsImmediate = Number(session.release_feedback) === 1;
+        let result;
+
+        if (feedbackIsImmediate) {
+            const aiResult = await markLongAnswer({ question, answerText });
+            result = await saveLongAnswerResponse({
+                sessionId: req.params.sessionId,
+                questionId: req.params.questionId,
+                studentId: req.user.id,
+                answerText,
+                aiResult
+            });
+
+            return res.json({
+                id: result.id,
+                question_id: Number(req.params.questionId),
+                answer_text: answerText,
+                markingPending: false
+            });
+        }
+
+        result = await saveLongAnswerResponse({
+            sessionId: req.params.sessionId,
+            questionId: req.params.questionId,
+            studentId: req.user.id,
+            answerText,
+            markingPending: true
+        });
+
+        res.json({
+            id: result.id,
+            question_id: Number(req.params.questionId),
+            answer_text: answerText,
+            markingPending: true
+        });
+
+        markSavedLongAnswerResponse({
+            sessionId: req.params.sessionId,
+            questionId: req.params.questionId,
+            studentId: req.user.id,
+            answerText
+        });
+    } catch (error) {
+        const aiError = getAiErrorResponse(error, 'AI marking');
+        if (aiError) return res.status(aiError.status).json({ error: aiError.error });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/long-answer/sessions/:sessionId/complete', authorize(['student']), async (req, res) => {
+    try {
+        const session = await getLongAnswerSessionForUser(req.params.sessionId, req.user);
+        if (!session) return res.status(404).json({ error: 'Session not found' });
+        if (session.status !== 'active') {
+            return res.status(400).json({ error: 'This quiz is no longer open for submission.' });
+        }
+
+        const totals = await queryDb.get(`
+            SELECT COUNT(q.id) as question_count, COUNT(r.id) as response_count
+            FROM long_answer_questions q
+            LEFT JOIN long_answer_responses r
+                ON r.question_id = q.id
+               AND r.session_id = ?
+               AND r.student_id = ?
+            WHERE q.quiz_id = ?
+        `, [session.id, req.user.id, session.quiz_id]);
+        if (!totals.question_count || totals.response_count < totals.question_count) {
+            return res.status(400).json({ error: 'Submit an answer for every question before finishing the quiz.' });
+        }
+
+        await queryDb.run(`
+            INSERT INTO long_answer_submissions (session_id, student_id, submitted_at)
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(session_id, student_id) DO NOTHING
+        `, [session.id, req.user.id]);
+        const submission = await queryDb.get(
+            'SELECT submitted_at FROM long_answer_submissions WHERE session_id = ? AND student_id = ?',
+            [session.id, req.user.id]
+        );
+        res.json({ message: 'Long-answer quiz submitted', submission });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.put('/long-answer/responses/:responseId/review', authorize(['teacher', 'admin']), async (req, res) => {
+    const { teacherScore, teacherFeedback = '', clearOverride = false } = req.body;
+    try {
+        const response = await queryDb.get(`
+            SELECT r.*, las.teacher_id, q.max_marks
+            FROM long_answer_responses r
+            JOIN long_answer_sessions las ON las.id = r.session_id
+            JOIN long_answer_questions q ON q.id = r.question_id
+            WHERE r.id = ?
+        `, [req.params.responseId]);
+        if (!response) return res.status(404).json({ error: 'Response not found' });
+        if (req.user.role === 'teacher' && String(response.teacher_id) !== String(req.user.id)) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        if (clearOverride) {
+            await queryDb.run(`
+                UPDATE long_answer_responses
+                SET teacher_score = NULL, teacher_feedback = NULL, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            `, [req.params.responseId]);
+            const savedResponse = await queryDb.get(
+                'SELECT teacher_score, teacher_feedback, updated_at FROM long_answer_responses WHERE id = ?',
+                [req.params.responseId]
+            );
+            return res.json({ message: 'Teacher override removed', ...savedResponse });
+        }
+
+        const score = Number(teacherScore);
+        if (!Number.isInteger(score) || score < 0 || score > response.max_marks) {
+            return res.status(400).json({ error: `Teacher score must be a whole number from 0 to ${response.max_marks}` });
+        }
+        const feedback = String(teacherFeedback || '').trim();
+        await queryDb.run(`
+            UPDATE long_answer_responses
+            SET teacher_score = ?, teacher_feedback = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `, [score, feedback, req.params.responseId]);
+        const savedResponse = await queryDb.get(
+            'SELECT teacher_score, teacher_feedback, updated_at FROM long_answer_responses WHERE id = ?',
+            [req.params.responseId]
+        );
+        res.json({ message: 'Review saved', ...savedResponse });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.put('/long-answer/sessions/:sessionId/status', authorize(['teacher', 'admin']), async (req, res) => {
+    const status = String(req.body.status || '').toLowerCase();
+    if (!['active', 'completed', 'archived'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    try {
+        const session = await getLongAnswerSessionForUser(req.params.sessionId, req.user);
+        if (!session) return res.status(404).json({ error: 'Session not found' });
+        await queryDb.run('UPDATE long_answer_sessions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [status, req.params.sessionId]);
+        res.json({ message: 'Session status updated', status });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.put('/long-answer/sessions/:sessionId/feedback-release', authorize(['teacher', 'admin']), async (req, res) => {
+    const releaseFeedback = req.body.releaseFeedback === true;
+    try {
+        const session = await getLongAnswerSessionForUser(req.params.sessionId, req.user);
+        if (!session) return res.status(404).json({ error: 'Session not found' });
+        await queryDb.run(
+            'UPDATE long_answer_sessions SET release_feedback = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [releaseFeedback ? 1 : 0, req.params.sessionId]
+        );
+        res.json({
+            message: releaseFeedback ? 'Marks and feedback released' : 'Marks and feedback held',
+            release_feedback: releaseFeedback ? 1 : 0
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -1028,6 +2198,8 @@ router.get('/admin/tags', authorize(['admin']), async (req, res) => {
                 SELECT ${field} AS value FROM quizzes WHERE ${field} IS NOT NULL AND ${field} != ''
                 UNION
                 SELECT ${field} AS value FROM questions WHERE ${field} IS NOT NULL AND ${field} != ''
+                UNION
+                SELECT ${field} AS value FROM long_answer_bank_questions WHERE ${field} IS NOT NULL AND ${field} != ''
             )
             ORDER BY value ASC
         `);

@@ -1,0 +1,922 @@
+{
+  "title": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025",
+  "description": "Selected text-answer questions from Cambridge IGCSE Computer Science 0478/11 October/November 2025. Includes written explanations, short exact answers, binary calculations and a CPU fill-the-sequence item. Excludes diagram drawing and tick/circle selection items.",
+  "subject": "Computer Science",
+  "level": "IGCSE",
+  "topic": "Computer Systems",
+  "source": {
+    "question_paper": "0478 Computer Science November 2025 Question Paper 11",
+    "mark_scheme": "0478 Computer Science November 2025 Mark Scheme 11",
+    "component": "0478/11",
+    "series": "October/November 2025"
+  },
+  "questions": [
+    {
+      "id": "0478_11_ON25_1a",
+      "short_name": "0478/11 O/N/25 - Q1(a) - Binary Representation",
+      "answer_type": "prose",
+      "question": "State the highest denary number that can be stored in a single 8-bit register.",
+      "student_context": "The register stores an unsigned binary value.",
+      "ai_context": "Require the exact denary value.",
+      "max_marks": 1,
+      "topic": "Binary Representation",
+      "answer_key": "255",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States 255."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept the exact value with harmless surrounding explanation."
+      ],
+      "common_misconceptions": [
+        "Giving 256.",
+        "Treating the register as a signed value."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_1b",
+      "short_name": "0478/11 O/N/25 - Q1(b) - Binary Representation",
+      "answer_type": "prose",
+      "question": "Convert the denary numbers 23 and 168 into the 8-bit binary values that would be stored in registers.",
+      "student_context": "Give one 8-bit binary value for 23 and one 8-bit binary value for 168.",
+      "ai_context": "Award one mark for each correct 8-bit conversion. Require leading zeroes where needed.",
+      "max_marks": 2,
+      "topic": "Binary Representation",
+      "answer_key": "23 = 00010111. 168 = 10101000.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Converts 23 to 00010111."
+        },
+        {
+          "marks": 1,
+          "criterion": "Converts 168 to 10101000."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept labels, line breaks or clear equivalent formatting."
+      ],
+      "common_misconceptions": [
+        "Omitting the required leading zeroes for 23.",
+        "Reversing bit order."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_1c",
+      "short_name": "0478/11 O/N/25 - Q1(c) - Binary Representation",
+      "answer_type": "prose",
+      "question": "Convert the 8-bit binary value 00001011 into denary.",
+      "student_context": "Give the denary value that a calculator would display.",
+      "ai_context": "Require the exact denary value.",
+      "max_marks": 1,
+      "topic": "Binary Representation",
+      "answer_key": "11",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States 11."
+        }
+      ],
+      "acceptable_alternatives": [],
+      "common_misconceptions": [
+        "Interpreting the value as decimal digits rather than binary."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_1d",
+      "short_name": "0478/11 O/N/25 - Q1(d) - Binary Representation",
+      "answer_type": "prose",
+      "question": "Convert the 8-bit binary value 01000010 into denary.",
+      "student_context": "Give the denary value that a calculator would display.",
+      "ai_context": "Require the exact denary value.",
+      "max_marks": 1,
+      "topic": "Binary Representation",
+      "answer_key": "66",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States 66."
+        }
+      ],
+      "acceptable_alternatives": [],
+      "common_misconceptions": [
+        "Interpreting the value as decimal digits rather than binary."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_1e",
+      "short_name": "0478/11 O/N/25 - Q1(e) - Binary Addition",
+      "answer_type": "prose",
+      "question": "Add the binary numbers 01110110 and 00110000. Give your answer in binary and show your working.",
+      "student_context": "Use 8-bit binary addition. Include carries or another clear method.",
+      "ai_context": "Award one mark for each correct nibble of the final 8-bit answer and one mark for a valid method of working such as carries.",
+      "max_marks": 3,
+      "topic": "Binary Addition",
+      "answer_key": "01110110 + 00110000 = 10100110. Carries should be shown or explained.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Gives the correct left nibble 1010 in the final answer."
+        },
+        {
+          "marks": 1,
+          "criterion": "Gives the correct right nibble 0110 in the final answer."
+        },
+        {
+          "marks": 1,
+          "criterion": "Shows a correct binary-addition method, such as appropriate carries."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept a clearly explained equivalent working method."
+      ],
+      "common_misconceptions": [
+        "Adding the values as denary text.",
+        "Giving a final answer without working."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_1f",
+      "short_name": "0478/11 O/N/25 - Q1(f) - Binary Representation",
+      "answer_type": "prose",
+      "question": "State how a calculator could represent a negative denary number as a binary number.",
+      "student_context": "Name the standard binary representation method.",
+      "ai_context": "Require two's complement or a harmless spelling variant.",
+      "max_marks": 1,
+      "topic": "Binary Representation",
+      "answer_key": "Use two's complement.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States two's complement."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept twos complement or two's complement."
+      ],
+      "common_misconceptions": [
+        "Only saying to add a minus sign."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_1g",
+      "short_name": "0478/11 O/N/25 - Q1(g) - Embedded Systems",
+      "answer_type": "prose",
+      "question": "Explain why an electronic calculator is an example of an embedded system.",
+      "student_context": "Give two relevant characteristics of an embedded system that apply to a calculator.",
+      "max_marks": 2,
+      "topic": "Embedded Systems",
+      "answer_key": "A calculator has a single or limited function, uses dedicated hardware and a microprocessor, and its function is not easily changed.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Explains that it has a single, limited or dedicated function."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains another valid embedded-system characteristic: dedicated hardware, a microprocessor, or a function that is not easily changed."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit any two distinct valid embedded-system characteristics."
+      ],
+      "common_misconceptions": [
+        "Only saying that the calculator is electronic.",
+        "Describing a general-purpose computer."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_2a",
+      "short_name": "0478/11 O/N/25 - Q2(a) - Compression",
+      "answer_type": "prose",
+      "question": "Lossy compression reduces the size of an image file. Give two other reductions that lossy compression can make to the image.",
+      "student_context": "Do not repeat file size. Give two image properties or kinds of image information that can be reduced.",
+      "max_marks": 2,
+      "topic": "Compression",
+      "answer_key": "Lossy compression can reduce resolution or number of pixels, colour depth or bit depth, image quality or detail, and metadata.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Identifies one valid reduction: resolution/pixels, colour depth/bit depth, quality/detail, or metadata."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies a second distinct valid reduction."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept equivalent wording for the listed image properties."
+      ],
+      "common_misconceptions": [
+        "Repeating that file size is reduced.",
+        "Giving two phrases that mean the same reduction."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_2bi",
+      "short_name": "0478/11 O/N/25 - Q2(b)(i) - Networks",
+      "answer_type": "prose",
+      "question": "State the name of the network device that reads a packet's destination IP address and forwards the packet towards the correct destination.",
+      "student_context": "Give the device name.",
+      "ai_context": "Require router.",
+      "max_marks": 1,
+      "topic": "Networks",
+      "answer_key": "Router",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States router."
+        }
+      ],
+      "acceptable_alternatives": [],
+      "common_misconceptions": [
+        "Giving switch."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_2bii",
+      "short_name": "0478/11 O/N/25 - Q2(b)(ii) - Networks",
+      "answer_type": "prose",
+      "question": "Identify the part of a packet where the destination IP address is found.",
+      "student_context": "Give the packet section name.",
+      "ai_context": "Require header or packet header.",
+      "max_marks": 1,
+      "topic": "Networks",
+      "answer_key": "Packet header",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States header or packet header."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept header."
+      ],
+      "common_misconceptions": [
+        "Giving payload."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_2c",
+      "short_name": "0478/11 O/N/25 - Q2(c) - Networks",
+      "answer_type": "prose",
+      "question": "Give three characteristics of the IPv6 address format.",
+      "student_context": "Describe the structure or notation of an IPv6 address.",
+      "max_marks": 3,
+      "topic": "Networks",
+      "answer_key": "IPv6 addresses use 128 bits and hexadecimal notation. They are separated by colons into 8 groups of 4 digits. Consecutive groups of zeroes may be represented once using ::.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that IPv6 uses 128 bits."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that IPv6 uses hexadecimal."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that groups are separated by colons."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that there are 8 groups of digits."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that each group has 4 digits."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that consecutive groups of zeroes can be represented once using ::."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 3 marks for any three distinct valid characteristics."
+      ],
+      "common_misconceptions": [
+        "Describing IPv4 dotted-decimal notation.",
+        "Saying IPv6 uses 32 bits."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_2eii",
+      "short_name": "0478/11 O/N/25 - Q2(e)(ii) - Encryption",
+      "answer_type": "prose",
+      "question": "Give one type of encryption other than symmetric encryption.",
+      "student_context": "Name the alternative encryption type.",
+      "ai_context": "Require asymmetric encryption.",
+      "max_marks": 1,
+      "topic": "Encryption",
+      "answer_key": "Asymmetric encryption",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States asymmetric encryption."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept asymmetric."
+      ],
+      "common_misconceptions": [
+        "Giving hashing."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_3a",
+      "short_name": "0478/11 O/N/25 - Q3(a) - Character Encoding",
+      "answer_type": "prose",
+      "question": "Explain how text entered on an on-screen keyboard is converted to binary so that it can be processed.",
+      "student_context": "Describe how characters are represented by the computer.",
+      "max_marks": 3,
+      "topic": "Character Encoding",
+      "answer_key": "A character set such as ASCII or Unicode is used. Each character has a unique binary value and is converted to that value.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that a character set is used."
+        },
+        {
+          "marks": 1,
+          "criterion": "Gives ASCII or Unicode as an example."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that each character has a unique binary value or is converted to its binary code."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit equivalent descriptions of character encoding."
+      ],
+      "common_misconceptions": [
+        "Saying that whole words each have one binary value."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_3bi",
+      "short_name": "0478/11 O/N/25 - Q3(b)(i) - Data Storage",
+      "answer_type": "prose",
+      "question": "Convert 4 gibibytes (GiB) into mebibytes (MiB).",
+      "student_context": "Give the amount of memory in MiB.",
+      "ai_context": "Require 4096 MiB.",
+      "max_marks": 1,
+      "topic": "Data Storage",
+      "answer_key": "4096 MiB",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States 4096 MiB."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept 4096 when the unit is clear from the question."
+      ],
+      "common_misconceptions": [
+        "Using 1000 instead of 1024."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_3bii",
+      "short_name": "0478/11 O/N/25 - Q3(b)(ii) - Data Storage",
+      "answer_type": "prose",
+      "question": "Convert 4 gibibytes (GiB) into tebibytes (TiB). Your answer may be rounded to 3 decimal places.",
+      "student_context": "Give the amount of memory in TiB.",
+      "ai_context": "Accept 0.004 when rounded to 3 decimal places or the exact binary-unit conversion 0.00390625.",
+      "max_marks": 1,
+      "topic": "Data Storage",
+      "answer_key": "0.004 TiB, or 0.00390625 TiB before rounding.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States 0.004 TiB or 0.00390625 TiB."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept an equivalent value with harmless additional decimal places."
+      ],
+      "common_misconceptions": [
+        "Using decimal-unit conversion instead of binary-unit conversion."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_3c",
+      "short_name": "0478/11 O/N/25 - Q3(c) - Memory",
+      "answer_type": "prose",
+      "question": "Explain why a portable device needs RAM.",
+      "student_context": "Give three valid purposes or characteristics of RAM that explain why the device uses it.",
+      "max_marks": 3,
+      "topic": "Memory",
+      "answer_key": "RAM stores data, instructions, software or programs currently in use. It provides temporary or volatile storage and allows direct CPU access or storage close to the processor.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Explains that RAM stores data or instructions currently in use."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that RAM stores software or programs currently in use."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that RAM is temporary or volatile storage."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that RAM allows direct CPU access or stores data closer to the processor."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 3 marks for three distinct valid points."
+      ],
+      "common_misconceptions": [
+        "Describing permanent secondary storage.",
+        "Saying RAM retains data when power is removed."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_4a",
+      "short_name": "0478/11 O/N/25 - Q4(a) - Cybersecurity",
+      "answer_type": "prose",
+      "question": "Describe the process of phishing.",
+      "student_context": "Describe how a phishing attempt reaches a user and how personal information may be stolen.",
+      "max_marks": 4,
+      "topic": "Cybersecurity",
+      "answer_key": "A legitimate-looking email is sent to a user. The user clicks a link or replies, may be directed to a fake website, enters personal data, and that data is stolen or maliciously used by a third party.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Describes a legitimate-looking email or message being sent to the user."
+        },
+        {
+          "marks": 1,
+          "criterion": "Describes the user clicking a link or replying to the message."
+        },
+        {
+          "marks": 1,
+          "criterion": "Describes the user being directed to a fake website."
+        },
+        {
+          "marks": 1,
+          "criterion": "Describes the user entering personal data."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the data is stolen or maliciously used by a third party."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 4 marks for four distinct stages.",
+        "Credit equivalent phishing channels such as a convincing message where the process is clear."
+      ],
+      "common_misconceptions": [
+        "Only describing malware infection.",
+        "Only stating that phishing is a scam without describing the process."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_4b",
+      "short_name": "0478/11 O/N/25 - Q4(b) - Cybersecurity",
+      "answer_type": "prose",
+      "question": "Give two ways an employee could identify phishing.",
+      "student_context": "Describe two checks that could reveal a suspicious message.",
+      "max_marks": 2,
+      "topic": "Cybersecurity",
+      "answer_key": "Check the sender email address, check the tone or spelling of the email, and check the URL attached to a link.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Suggests checking the sender's email address."
+        },
+        {
+          "marks": 1,
+          "criterion": "Suggests checking the tone or spelling of the email."
+        },
+        {
+          "marks": 1,
+          "criterion": "Suggests checking the URL attached to a link."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 2 marks for two distinct valid checks."
+      ],
+      "common_misconceptions": [
+        "Giving two versions of the same check."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_4c",
+      "short_name": "0478/11 O/N/25 - Q4(c) - Cybersecurity",
+      "answer_type": "prose",
+      "question": "Give three examples of malware that anti-malware software can detect.",
+      "student_context": "Name three distinct types of malware.",
+      "max_marks": 3,
+      "topic": "Cybersecurity",
+      "answer_key": "Examples include virus, worm, Trojan horse, spyware, keylogger, ransomware and adware.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Names one valid malware type."
+        },
+        {
+          "marks": 1,
+          "criterion": "Names a second distinct valid malware type."
+        },
+        {
+          "marks": 1,
+          "criterion": "Names a third distinct valid malware type."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept virus, worm, Trojan horse, spyware, keylogger, ransomware, adware or another clearly valid malware example."
+      ],
+      "common_misconceptions": [
+        "Giving phishing as a malware type.",
+        "Repeating the same malware type."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_4di",
+      "short_name": "0478/11 O/N/25 - Q4(d)(i) - Programming Languages",
+      "answer_type": "prose",
+      "question": "State what is meant by a high-level programming language.",
+      "student_context": "Give one valid defining characteristic.",
+      "max_marks": 1,
+      "topic": "Programming Languages",
+      "answer_key": "A high-level language uses English-like statements, needs conversion into machine code before processing, or is portable across computers.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States a valid characteristic: English-like statements, conversion to machine code, or portability."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit equivalent wording for one valid characteristic."
+      ],
+      "common_misconceptions": [
+        "Defining it only as a language used by skilled programmers."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_4dii",
+      "short_name": "0478/11 O/N/25 - Q4(d)(ii) - Programming Languages",
+      "answer_type": "prose",
+      "question": "Give two benefits of using a high-level language, other than code being easy to debug.",
+      "student_context": "Do not use easy debugging as either answer.",
+      "max_marks": 2,
+      "topic": "Programming Languages",
+      "answer_key": "High-level code is easy or quick to read, write and understand; it is machine independent; it is less likely to contain errors; and it lets programmers focus on the problem rather than memory or hardware manipulation.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Gives one valid benefit other than easy debugging."
+        },
+        {
+          "marks": 1,
+          "criterion": "Gives a second distinct valid benefit other than easy debugging."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept readability, ease of writing, ease of understanding, machine independence, fewer errors, or abstraction from hardware."
+      ],
+      "common_misconceptions": [
+        "Repeating easy debugging.",
+        "Giving two phrases that express the same benefit."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_4diii",
+      "short_name": "0478/11 O/N/25 - Q4(d)(iii) - Programming Languages",
+      "answer_type": "prose",
+      "question": "Give one drawback of using a high-level language, other than needing conversion to a low-level language before it can run.",
+      "student_context": "Do not repeat the need for translation.",
+      "max_marks": 1,
+      "topic": "Programming Languages",
+      "answer_key": "A high-level language cannot directly manipulate hardware, takes longer to convert, cannot use specialised hardware, or uses more memory.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Gives one valid drawback other than requiring conversion before execution."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept inability to manipulate hardware directly, slower conversion, inability to use specialised hardware, or less efficient memory use."
+      ],
+      "common_misconceptions": [
+        "Repeating that translation is needed."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_4div",
+      "short_name": "0478/11 O/N/25 - Q4(d)(iv) - Translators",
+      "answer_type": "prose",
+      "question": "Explain why an interpreter is more appropriate than a compiler while a computer game is being developed.",
+      "student_context": "Focus on how an interpreter helps during development and debugging.",
+      "max_marks": 3,
+      "topic": "Translators",
+      "answer_key": "An interpreter translates and executes code line by line, stops when an error is found and shows its location, allows errors to be corrected without retranslating the whole program, and makes it easier to test sections before the whole program is complete.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Explains that code is translated and executed line by line."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that execution stops when an error is found or that the error location is shown."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that errors can be corrected in real time or without retranslating the whole program."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that sections of code can be tested without writing the whole program."
+        },
+        {
+          "marks": 1,
+          "criterion": "Links these characteristics to easier debugging during development."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 3 marks for three distinct valid points."
+      ],
+      "common_misconceptions": [
+        "Saying an interpreter produces a standalone executable.",
+        "Only saying that an interpreter is faster without explanation."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_5a",
+      "short_name": "0478/11 O/N/25 - Q5(a) - Robotics",
+      "answer_type": "prose",
+      "question": "Describe three characteristics of a robot.",
+      "student_context": "Give three distinct characteristics.",
+      "max_marks": 3,
+      "topic": "Robotics",
+      "answer_key": "A robot has a mechanical structure or framework, electrical components such as sensors, a microprocessor or actuators, is programmable, and has the ability to move.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Mentions a mechanical structure or framework."
+        },
+        {
+          "marks": 1,
+          "criterion": "Mentions electrical components such as sensors, a microprocessor or actuators."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that it is programmable."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that it has the ability to move."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award a maximum of 3 marks for three distinct valid characteristics."
+      ],
+      "common_misconceptions": [
+        "Only describing artificial intelligence.",
+        "Only giving examples of robots."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_5b",
+      "short_name": "0478/11 O/N/25 - Q5(b) - Robotics",
+      "answer_type": "prose",
+      "question": "Explain one benefit to a supermarket of using robots to deliver groceries to elderly customers.",
+      "student_context": "Give a benefit and a matching explanation.",
+      "max_marks": 2,
+      "topic": "Robotics",
+      "answer_key": "The supermarket may gain customers and increase sales because elderly people who could not visit the store can shop there. It may also serve customers more efficiently because multiple orders can be delivered at the same time.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Identifies a valid supermarket benefit, such as gaining customers, increasing sales or improving delivery efficiency."
+        },
+        {
+          "marks": 1,
+          "criterion": "Provides a matching explanation for the identified benefit."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit another realistic business benefit with a clear linked explanation."
+      ],
+      "common_misconceptions": [
+        "Giving only a benefit to the customer.",
+        "Giving a benefit without explaining why it applies."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_5c",
+      "short_name": "0478/11 O/N/25 - Q5(c) - Robotics",
+      "answer_type": "prose",
+      "question": "Explain one drawback to elderly customers of robots being used to deliver their groceries.",
+      "student_context": "Give a drawback and a matching explanation.",
+      "max_marks": 2,
+      "topic": "Robotics",
+      "answer_key": "Customers may get less exercise because they no longer walk to or around the store. Some may struggle with or mistrust the technology, causing stress, anxiety or mistakes when receiving deliveries.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Identifies a valid drawback to an elderly customer, such as reduced exercise or difficulty trusting or using technology."
+        },
+        {
+          "marks": 1,
+          "criterion": "Provides a matching explanation for the identified drawback."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit another realistic customer drawback with a clear linked explanation."
+      ],
+      "common_misconceptions": [
+        "Giving only a drawback to the supermarket.",
+        "Giving a drawback without explaining why it applies."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_5e",
+      "short_name": "0478/11 O/N/25 - Q5(e) - Artificial Intelligence",
+      "answer_type": "prose",
+      "question": "Give three ways that grocery-delivery robots could make use of artificial intelligence.",
+      "student_context": "Describe three distinct uses of AI by a delivery robot.",
+      "max_marks": 3,
+      "topic": "Artificial Intelligence",
+      "answer_key": "A robot could learn routes, learn where obstacles occur, deal with obstacles more effectively, reason about paths and roads, use machine learning, and identify patterns in route data.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Gives one valid use of AI by a delivery robot."
+        },
+        {
+          "marks": 1,
+          "criterion": "Gives a second distinct valid use of AI by a delivery robot."
+        },
+        {
+          "marks": 1,
+          "criterion": "Gives a third distinct valid use of AI by a delivery robot."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept learning routes, obstacle handling, distinguishing paths and roads, machine learning, pattern recognition, or another realistic AI use."
+      ],
+      "common_misconceptions": [
+        "Only describing ordinary programmed movement with no AI aspect.",
+        "Repeating the same route-learning point."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_6a",
+      "short_name": "0478/11 O/N/25 - Q6(a) - CPU Architecture",
+      "answer_type": "prose",
+      "question": "Complete the sequence describing how a Von Neumann CPU fetches and decodes an instruction. State the six missing components in order: The [1] stores the address of the next instruction to be fetched. This address is sent to the [2]. The instruction is retrieved from RAM and stored in the [3]. It is then sent to the [4], where it is decoded by the [5] using an [6].",
+      "student_context": "Give six terms in order. Use standard CPU register and component names.",
+      "ai_context": "Award one mark for each correct term in the correct numbered position. Do not award a correct term placed in the wrong position.",
+      "max_marks": 6,
+      "topic": "CPU Architecture",
+      "answer_key": "1. program counter; 2. memory address register; 3. memory data register; 4. current instruction register; 5. control unit; 6. instruction set.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Position 1 is program counter."
+        },
+        {
+          "marks": 1,
+          "criterion": "Position 2 is memory address register."
+        },
+        {
+          "marks": 1,
+          "criterion": "Position 3 is memory data register."
+        },
+        {
+          "marks": 1,
+          "criterion": "Position 4 is current instruction register."
+        },
+        {
+          "marks": 1,
+          "criterion": "Position 5 is control unit."
+        },
+        {
+          "marks": 1,
+          "criterion": "Position 6 is instruction set."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept standard abbreviations PC, MAR, MDR and CIR when their positions are clear."
+      ],
+      "common_misconceptions": [
+        "Using memory instruction register instead of memory data register.",
+        "Giving the correct terms in the wrong order."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_6bi",
+      "short_name": "0478/11 O/N/25 - Q6(b)(i) - Operating Systems",
+      "answer_type": "prose",
+      "question": "An interrupt is sent to the CPU whenever a key is pressed on a keyboard. Give the name of this type of interrupt.",
+      "student_context": "Name the interrupt category.",
+      "ai_context": "Require hardware interrupt.",
+      "max_marks": 1,
+      "topic": "Operating Systems",
+      "answer_key": "Hardware interrupt",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States hardware interrupt."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept hardware."
+      ],
+      "common_misconceptions": [
+        "Giving software interrupt."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_6bii",
+      "short_name": "0478/11 O/N/25 - Q6(b)(ii) - Operating Systems",
+      "answer_type": "prose",
+      "question": "Give the name of the program that services an interrupt.",
+      "student_context": "Give the standard program name.",
+      "ai_context": "Accept interrupt handler or interrupt service routine.",
+      "max_marks": 1,
+      "topic": "Operating Systems",
+      "answer_key": "Interrupt handler, also called an interrupt service routine.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States interrupt handler or interrupt service routine."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept ISR."
+      ],
+      "common_misconceptions": [
+        "Giving operating system without naming the servicing routine."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_6biii",
+      "short_name": "0478/11 O/N/25 - Q6(b)(iii) - Operating Systems",
+      "answer_type": "prose",
+      "question": "Give one operating-system function other than handling interrupts.",
+      "student_context": "Name one valid operating-system function.",
+      "max_marks": 1,
+      "topic": "Operating Systems",
+      "answer_key": "Examples include managing files, providing a user interface, managing peripherals and drivers, managing memory, managing multitasking, providing a platform for applications, providing security, and managing user accounts.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States one valid operating-system function other than handling interrupts."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept file management, user interface, peripheral or driver management, memory management, multitasking, application platform, security, user-account management, or another clearly valid OS function."
+      ],
+      "common_misconceptions": [
+        "Giving a function of application software."
+      ]
+    },
+    {
+      "id": "0478_11_ON25_7",
+      "short_name": "0478/11 O/N/25 - Q7 - Data Transmission",
+      "answer_type": "prose",
+      "question": "A theatre microphone is connected by cables to speakers around the theatre. Identify the most appropriate data-transmission methods for this purpose and explain your choices.",
+      "student_context": "Consider how bits should travel over the cable and whether data needs to travel in one direction or both directions.",
+      "max_marks": 5,
+      "topic": "Data Transmission",
+      "answer_key": "Use serial transmission because data travels a long distance over one wire, one bit at a time, with less risk of skew and adequate speed. Use simplex transmission because data only needs to travel from microphone to speakers and does not need to return.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Identifies serial transmission."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies simplex transmission."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains a valid reason for serial transmission: long distance, one wire, bits sent in order or one at a time, less skew/error, or adequate speed."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains another distinct valid reason for serial transmission."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains simplex transmission: data only needs to travel in one direction and does not need to return from speakers to microphone."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award the two method marks only for serial and simplex.",
+        "Award up to three explanation marks using distinct valid points."
+      ],
+      "common_misconceptions": [
+        "Choosing parallel transmission for a long cable run.",
+        "Choosing duplex transmission when speakers do not need to send data back."
+      ]
+    }
+  ]
+}

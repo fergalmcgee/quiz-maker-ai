@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, PlusCircle, Globe, Play, Users, Settings, Trash2, Edit, PlayCircle, Clock, CheckCircle2, AlertCircle, Share2, Search, Filter, ChevronRight, ChevronLeft, Calendar, BarChart3, Key, Download, Archive, CheckCircle, UserPlus, UserMinus, History, Copy, KeyRound, TrendingUp, X, Database, ClipboardList, Lightbulb } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Globe, Play, Users, Settings, Trash2, Edit, PlayCircle, Clock, CheckCircle2, AlertCircle, Share2, Search, Filter, ChevronRight, ChevronLeft, Calendar, BarChart3, Key, Download, Archive, CheckCircle, UserPlus, UserMinus, History, Copy, KeyRound, TrendingUp, X, Database, ClipboardList, Lightbulb, BookOpenText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import TeacherGrowthView from '../components/TeacherGrowthView';
 
@@ -1113,6 +1113,11 @@ C) Error
                     <li>
                         <button onClick={() => navigate('/teacher/quick-checks')} style={tabStyle(false)}>
                             <Lightbulb size={20} /> Quick Checks
+                        </button>
+                    </li>
+                    <li>
+                        <button onClick={() => navigate('/teacher/long-answer')} style={tabStyle(false)}>
+                            <BookOpenText size={20} /> Long Answer
                         </button>
                     </li>
                     <li>

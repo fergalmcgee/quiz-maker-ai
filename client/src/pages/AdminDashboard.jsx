@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, CheckCircle, UserX, KeyRound, UserPlus, FileText, Tags, Shield, Database, Search, Save } from 'lucide-react';
+import { Users, CheckCircle, UserX, KeyRound, UserPlus, FileText, Tags, Shield, Database, Search, Save, BookOpenText, Archive, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function AdminDashboard({ user }) {
@@ -12,7 +12,7 @@ export default function AdminDashboard({ user }) {
     const [confirmAction, setConfirmAction] = useState(null);
     const [newPasswordValue, setNewPasswordValue] = useState('');
 
-    const [activeTab, setActiveTab] = useState('users'); // 'users', 'add', 'bulk', 'tags', 'questions', 'audit'
+    const [activeTab, setActiveTab] = useState('users'); // 'users', 'add', 'bulk', 'tags', 'questions', 'longAnswers', 'audit'
 
     // Add User State
     const [newUsername, setNewUsername] = useState('');
@@ -37,6 +37,31 @@ export default function AdminDashboard({ user }) {
     const [bankLoading, setBankLoading] = useState(false);
     const [bankError, setBankError] = useState('');
 
+    const emptyLongAnswerDraft = {
+        short_name: '',
+        answer_type: 'prose',
+        question_text: '',
+        student_context: '',
+        ai_context: '',
+        context_image_url: '',
+        max_marks: 4,
+        answer_key: '',
+        mark_scheme: '',
+        acceptable_alternatives: '',
+        common_misconceptions: '',
+        subject: 'Computer Science',
+        level: '',
+        topic: '',
+        source: ''
+    };
+    const [longAnswerQuestions, setLongAnswerQuestions] = useState([]);
+    const [longAnswerDrafts, setLongAnswerDrafts] = useState({});
+    const [longAnswerNewDraft, setLongAnswerNewDraft] = useState(emptyLongAnswerDraft);
+    const [longAnswerImportText, setLongAnswerImportText] = useState('');
+    const [longAnswerSearch, setLongAnswerSearch] = useState('');
+    const [longAnswerLoading, setLongAnswerLoading] = useState(false);
+    const [longAnswerImageUploading, setLongAnswerImageUploading] = useState(false);
+
     useEffect(() => {
         fetchUsers();
         fetchTags();
@@ -51,6 +76,13 @@ export default function AdminDashboard({ user }) {
     useEffect(() => {
         if (activeTab === 'questions' && bankQuestions.length === 0 && !bankLoading) {
             fetchBankQuestions();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab]);
+
+    useEffect(() => {
+        if (activeTab === 'longAnswers' && longAnswerQuestions.length === 0 && !longAnswerLoading) {
+            fetchLongAnswerQuestions();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab]);
@@ -344,6 +376,240 @@ export default function AdminDashboard({ user }) {
         }
     };
 
+    const listToText = (value) => {
+        if (!value) return '';
+        if (Array.isArray(value)) {
+            return value.map(item => typeof item === 'string' ? item : item.criterion || item.text || '').filter(Boolean).join('\n');
+        }
+        return String(value);
+    };
+
+    const textToLines = (value) => String(value || '').split('\n').map(line => line.trim()).filter(Boolean);
+
+    const questionToDraft = (question) => ({
+        short_name: question.short_name || '',
+        answer_type: question.answer_type || 'prose',
+        question_text: question.question_text || '',
+        student_context: question.student_context || '',
+        ai_context: question.ai_context || '',
+        context_image_url: question.context_image_url || '',
+        max_marks: question.max_marks || 1,
+        answer_key: question.answer_key || '',
+        mark_scheme: listToText(question.mark_scheme),
+        acceptable_alternatives: listToText(question.acceptable_alternatives),
+        common_misconceptions: listToText(question.common_misconceptions),
+        subject: question.subject || 'General',
+        level: question.level || 'General',
+        topic: question.topic || 'General',
+        source: question.source || ''
+    });
+
+    const draftToPayload = (draft) => ({
+        short_name: draft.short_name,
+        answer_type: draft.answer_type || 'prose',
+        question_text: draft.question_text,
+        student_context: draft.student_context,
+        ai_context: draft.ai_context,
+        context_image_url: draft.context_image_url,
+        max_marks: Number.parseInt(draft.max_marks, 10) || 1,
+        answer_key: draft.answer_key,
+        mark_scheme: textToLines(draft.mark_scheme).map(criterion => ({ marks: 1, criterion })),
+        acceptable_alternatives: textToLines(draft.acceptable_alternatives),
+        common_misconceptions: textToLines(draft.common_misconceptions),
+        subject: draft.subject,
+        level: draft.level,
+        topic: draft.topic,
+        source: draft.source
+    });
+
+    const fetchLongAnswerQuestions = async () => {
+        try {
+            setLongAnswerLoading(true);
+            const params = new URLSearchParams();
+            if (longAnswerSearch.trim()) params.append('q', longAnswerSearch.trim());
+            const res = await fetch(`/api/long-answer/bank/questions?${params.toString()}`, {
+                headers: { 'x-user-role': user.role, 'x-user-id': user.id }
+            });
+            if (!res.ok) throw new Error('Failed to load long-answer bank');
+            const data = await res.json();
+            setLongAnswerQuestions(Array.isArray(data) ? data : []);
+            setLongAnswerDrafts(Object.fromEntries((Array.isArray(data) ? data : []).map(question => [question.id, questionToDraft(question)])));
+        } catch (err) {
+            toast.error(err.message);
+        } finally {
+            setLongAnswerLoading(false);
+        }
+    };
+
+    const updateLongAnswerDraft = (questionId, field, value) => {
+        setLongAnswerDrafts(prev => ({
+            ...prev,
+            [questionId]: {
+                ...(prev[questionId] || {}),
+                [field]: value
+            }
+        }));
+    };
+
+    const handleImportLongAnswerBank = async () => {
+        if (!longAnswerImportText.trim()) return toast.error('Paste a JSON file first');
+        try {
+            const parsed = JSON.parse(longAnswerImportText);
+            const res = await fetch('/api/admin/long-answer/bank/import', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-user-role': user.role,
+                    'x-user-id': user.id
+                },
+                body: JSON.stringify({ source: parsed })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to import long-answer bank');
+            setLongAnswerImportText('');
+            toast.success(`Imported ${data.questionsImported} long-answer questions`);
+            fetchLongAnswerQuestions();
+        } catch (err) {
+            toast.error(err.message);
+        }
+    };
+
+    const handleSaveLongAnswerBankQuestion = async (questionId = null) => {
+        const draft = questionId ? longAnswerDrafts[questionId] : longAnswerNewDraft;
+        const payload = draftToPayload(draft);
+        try {
+            const res = await fetch(questionId ? `/api/admin/long-answer/bank/questions/${questionId}` : '/api/admin/long-answer/bank/questions', {
+                method: questionId ? 'PUT' : 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-user-role': user.role,
+                    'x-user-id': user.id
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to save long-answer question');
+            if (!questionId) setLongAnswerNewDraft(emptyLongAnswerDraft);
+            toast.success('Long-answer question saved');
+            fetchLongAnswerQuestions();
+        } catch (err) {
+            toast.error(err.message);
+        }
+    };
+
+    const handleArchiveLongAnswerQuestion = async (questionId) => {
+        try {
+            const res = await fetch(`/api/admin/long-answer/bank/questions/${questionId}/archive`, {
+                method: 'PUT',
+                headers: { 'x-user-role': user.role, 'x-user-id': user.id }
+            });
+            if (!res.ok) throw new Error('Failed to archive long-answer question');
+            toast.success('Long-answer question archived');
+            fetchLongAnswerQuestions();
+        } catch (err) {
+            toast.error(err.message);
+        }
+    };
+
+    const getImageFileFromClipboardOrDrop = (event) => {
+        const files = Array.from(event.clipboardData?.files || event.dataTransfer?.files || []);
+        const directImage = files.find(file => file.type?.startsWith('image/'));
+        if (directImage) return directImage;
+
+        const items = Array.from(event.clipboardData?.items || event.dataTransfer?.items || []);
+        const imageItem = items.find(item => item.type?.startsWith('image/'));
+        return imageItem?.getAsFile?.() || null;
+    };
+
+    const uploadLongAnswerContextImage = async (file, onChange) => {
+        const formData = new FormData();
+        formData.append('image', file, file.name || 'context-image.png');
+
+        setLongAnswerImageUploading(true);
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                headers: {
+                    'x-user-role': user.role,
+                    'x-user-id': user.id
+                },
+                body: formData
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Image upload failed');
+            onChange('context_image_url', data.url);
+            toast.success('Context image linked to the question');
+        } catch (err) {
+            toast.error(err.message);
+        } finally {
+            setLongAnswerImageUploading(false);
+        }
+    };
+
+    const handleLongAnswerImagePasteOrDrop = (event, onChange) => {
+        const imageFile = getImageFileFromClipboardOrDrop(event);
+        if (!imageFile) return;
+        event.preventDefault();
+        uploadLongAnswerContextImage(imageFile, onChange);
+    };
+
+    const renderLongAnswerEditor = (draft, onChange, onSave, saveLabel = 'Save') => (
+        <div
+            onPaste={event => handleLongAnswerImagePasteOrDrop(event, onChange)}
+            onDrop={event => handleLongAnswerImagePasteOrDrop(event, onChange)}
+            onDragOver={event => event.preventDefault()}
+            style={{ display: 'grid', gap: '0.75rem' }}
+        >
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 120px 1fr 1fr', gap: '0.75rem' }}>
+                <input placeholder="Short name, e.g. 8d SQL" value={draft.short_name} onChange={e => onChange('short_name', e.target.value)} style={inputStyle} />
+                <select value={draft.answer_type} onChange={e => onChange('answer_type', e.target.value)} style={inputStyle}>
+                    <option value="prose">Prose</option>
+                    <option value="pseudocode">Pseudocode</option>
+                    <option value="sql">SQL</option>
+                </select>
+                <input type="number" min="1" step="1" value={draft.max_marks} onChange={e => onChange('max_marks', e.target.value)} style={inputStyle} />
+                <input placeholder="Subject" value={draft.subject} onChange={e => onChange('subject', e.target.value)} style={inputStyle} />
+                <input placeholder="Level" value={draft.level} onChange={e => onChange('level', e.target.value)} style={inputStyle} />
+            </div>
+            <input placeholder="Topic" value={draft.topic} onChange={e => onChange('topic', e.target.value)} style={inputStyle} />
+            <textarea required placeholder="Question text" value={draft.question_text} onChange={e => onChange('question_text', e.target.value)} style={{ ...inputStyle, minHeight: '90px' }} />
+            <textarea placeholder="Student-facing context, such as a table/schema/scenario. This is shown to students." value={draft.student_context} onChange={e => onChange('student_context', e.target.value)} style={{ ...inputStyle, minHeight: '90px' }} />
+            <textarea placeholder="AI-only marking context, optional. Leave blank if DeepSeek does not need extra context." value={draft.ai_context} onChange={e => onChange('ai_context', e.target.value)} style={{ ...inputStyle, minHeight: '75px' }} />
+            <input placeholder="Context image URL, optional" value={draft.context_image_url} onChange={e => onChange('context_image_url', e.target.value)} style={inputStyle} />
+            <div
+                tabIndex={0}
+                onPaste={event => handleLongAnswerImagePasteOrDrop(event, onChange)}
+                onDrop={event => handleLongAnswerImagePasteOrDrop(event, onChange)}
+                onDragOver={event => event.preventDefault()}
+                style={{
+                    padding: '1rem',
+                    border: '1px dashed var(--border)',
+                    borderRadius: 'var(--radius-md)',
+                    backgroundColor: '#F8FAFC',
+                    color: 'var(--text-muted)',
+                    outline: 'none'
+                }}
+            >
+                {longAnswerImageUploading ? 'Uploading image...' : 'Paste or drop a context image here to link it to this question.'}
+                {draft.context_image_url && (
+                    <img
+                        src={draft.context_image_url}
+                        alt="Context preview"
+                        style={{ display: 'block', marginTop: '0.75rem', maxWidth: '100%', maxHeight: '220px', objectFit: 'contain', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
+                    />
+                )}
+            </div>
+            <textarea required placeholder="Answer key / model answer" value={draft.answer_key} onChange={e => onChange('answer_key', e.target.value)} style={{ ...inputStyle, minHeight: '90px' }} />
+            <textarea required placeholder="Mark scheme, one criterion per line" value={draft.mark_scheme} onChange={e => onChange('mark_scheme', e.target.value)} style={{ ...inputStyle, minHeight: '90px' }} />
+            <textarea placeholder="Acceptable alternatives, one per line" value={draft.acceptable_alternatives} onChange={e => onChange('acceptable_alternatives', e.target.value)} style={{ ...inputStyle, minHeight: '70px' }} />
+            <textarea placeholder="Common misconceptions, one per line" value={draft.common_misconceptions} onChange={e => onChange('common_misconceptions', e.target.value)} style={{ ...inputStyle, minHeight: '70px' }} />
+            <input placeholder="Source, optional" value={draft.source} onChange={e => onChange('source', e.target.value)} style={inputStyle} />
+            <button onClick={onSave} style={{ backgroundColor: 'var(--primary)', color: 'white', border: 'none', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 700, display: 'inline-flex', gap: '0.45rem', alignItems: 'center', width: 'fit-content' }}>
+                <Save size={16} /> {saveLabel}
+            </button>
+        </div>
+    );
+
     if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading admin dashboard...</div>;
     if (error) return <div style={{ padding: '2rem', color: 'red', textAlign: 'center' }}>Error: {error}</div>;
 
@@ -372,6 +638,9 @@ export default function AdminDashboard({ user }) {
                 </button>
                 <button onClick={() => setActiveTab('questions')} style={{ ...navTabStyle, ...(activeTab === 'questions' ? activeNavTabStyle : {}) }}>
                     <Database size={18} /> Question Tags
+                </button>
+                <button onClick={() => setActiveTab('longAnswers')} style={{ ...navTabStyle, ...(activeTab === 'longAnswers' ? activeNavTabStyle : {}) }}>
+                    <BookOpenText size={18} /> Long Answers
                 </button>
                 <button onClick={() => setActiveTab('audit')} style={{ ...navTabStyle, ...(activeTab === 'audit' ? activeNavTabStyle : {}) }}>
                     <Shield size={18} /> Audit Log
@@ -725,6 +994,94 @@ export default function AdminDashboard({ user }) {
                                                 </div>
                                             ))}
                                         </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {activeTab === 'longAnswers' && (
+                <div className="fade-in" style={{ display: 'grid', gap: '1.25rem' }}>
+                    <div style={{ backgroundColor: 'var(--surface)', padding: '1.5rem', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                            <div>
+                                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><BookOpenText size={22} /> Long Answer Question Bank</h3>
+                                <p style={{ color: 'var(--text-muted)', margin: '0.35rem 0 0 0' }}>
+                                    Admin-managed AI-marked questions. Teachers can assemble quizzes from these approved items.
+                                </p>
+                            </div>
+                            <button onClick={fetchLongAnswerQuestions} disabled={longAnswerLoading} style={{ ...actionBtnStyle('var(--primary)', 'var(--background)', 'var(--primary)'), opacity: longAnswerLoading ? 0.65 : 1 }}>
+                                <Search size={16} /> {longAnswerLoading ? 'Searching...' : 'Refresh'}
+                            </button>
+                        </div>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                fetchLongAnswerQuestions();
+                            }}
+                            style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}
+                        >
+                            <input value={longAnswerSearch} onChange={e => setLongAnswerSearch(e.target.value)} placeholder="Search long-answer questions" style={{ ...inputStyle, flex: 1 }} />
+                            <button type="submit" style={{ backgroundColor: 'var(--primary)', color: 'white', border: 'none', padding: '0.8rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                                <Search size={16} /> Search
+                            </button>
+                        </form>
+                    </div>
+
+                    <div style={{ backgroundColor: 'var(--surface)', padding: '1.5rem', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)' }}>
+                        <h3 style={{ marginTop: 0 }}>Import JSON</h3>
+                        <textarea
+                            value={longAnswerImportText}
+                            onChange={e => setLongAnswerImportText(e.target.value)}
+                            placeholder="Paste long-answer JSON here"
+                            style={{ ...inputStyle, minHeight: '150px', fontFamily: 'monospace' }}
+                        />
+                        <button onClick={handleImportLongAnswerBank} style={{ marginTop: '0.75rem', backgroundColor: 'var(--primary)', color: 'white', border: 'none', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <Plus size={16} /> Import To Bank
+                        </button>
+                    </div>
+
+                    <div style={{ backgroundColor: 'var(--surface)', padding: '1.5rem', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)' }}>
+                        <h3 style={{ marginTop: 0 }}>Add One Question</h3>
+                        {renderLongAnswerEditor(
+                            longAnswerNewDraft,
+                            (field, value) => setLongAnswerNewDraft(current => ({ ...current, [field]: value })),
+                            () => handleSaveLongAnswerBankQuestion(null),
+                            'Add Question'
+                        )}
+                    </div>
+
+                    {longAnswerLoading && longAnswerQuestions.length === 0 ? (
+                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading long-answer questions...</div>
+                    ) : longAnswerQuestions.length === 0 ? (
+                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', backgroundColor: '#F8FAFC', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)' }}>
+                            No long-answer bank questions found.
+                        </div>
+                    ) : (
+                        <div style={{ display: 'grid', gap: '1rem' }}>
+                            {longAnswerQuestions.map(question => {
+                                const draft = longAnswerDrafts[question.id] || questionToDraft(question);
+                                return (
+                                    <div key={question.id} style={{ backgroundColor: 'var(--surface)', padding: '1.5rem', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '1rem' }}>
+                                            <div>
+                                                <h4 style={{ margin: 0 }}>{question.short_name || `Question #${question.id}`}</h4>
+                                                <p style={{ color: 'var(--text-muted)', margin: '0.35rem 0 0 0' }}>
+                                                    {question.answer_type} · {question.max_marks} marks · {question.subject} · {question.level || 'General'} · {question.topic || 'General'}
+                                                </p>
+                                            </div>
+                                            <button onClick={() => handleArchiveLongAnswerQuestion(question.id)} style={{ backgroundColor: '#FEF2F2', color: '#B91C1C', border: '1px solid #FECACA', padding: '0.65rem 0.9rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                <Archive size={16} /> Archive
+                                            </button>
+                                        </div>
+                                        {renderLongAnswerEditor(
+                                            draft,
+                                            (field, value) => updateLongAnswerDraft(question.id, field, value),
+                                            () => handleSaveLongAnswerBankQuestion(question.id),
+                                            'Save Changes'
+                                        )}
                                     </div>
                                 );
                             })}

@@ -1,0 +1,890 @@
+{
+  "title": "0478 Computer Science Paper 1 AI-Marked Practice - October/November 2025 - Variant 12",
+  "description": "Selected text-answer questions from Cambridge IGCSE Computer Science 0478/12 October/November 2025. Includes hexadecimal and binary calculations, written explanations, short exact answers, and typed adaptations of URL and web-technology fill-in items. Excludes tick-box selection and diagram drawing or annotation items.",
+  "subject": "Computer Science",
+  "level": "IGCSE",
+  "topic": "Computer Systems",
+  "source": {
+    "question_paper": "0478 Computer Science November 2025 Question Paper 12",
+    "mark_scheme": "0478 Computer Science November 2025 Mark Scheme 12",
+    "component": "0478/12",
+    "series": "October/November 2025"
+  },
+  "questions": [
+    {
+      "id": "0478_12_ON25_1a",
+      "short_name": "0478/12 O/N/25 - Q1(a) - Hexadecimal Representation",
+      "answer_type": "prose",
+      "question": "A computer has 12-bit registers. Give the largest hexadecimal number that can be stored in a 12-bit register.",
+      "student_context": "Give the three-digit hexadecimal value.",
+      "ai_context": "Require the exact hexadecimal value FFF.",
+      "max_marks": 1,
+      "topic": "Hexadecimal Representation",
+      "answer_key": "FFF",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States FFF."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept lowercase hexadecimal letters."
+      ],
+      "common_misconceptions": [
+        "Giving 1000, which requires more than 12 bits."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_1b",
+      "short_name": "0478/12 O/N/25 - Q1(b) - Binary Representation",
+      "answer_type": "prose",
+      "question": "A computer has 12-bit registers. Give the largest denary number that can be stored in a 12-bit register.",
+      "student_context": "The register stores an unsigned binary value.",
+      "ai_context": "Require the exact denary value 4095.",
+      "max_marks": 1,
+      "topic": "Binary Representation",
+      "answer_key": "4095",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States 4095."
+        }
+      ],
+      "acceptable_alternatives": [],
+      "common_misconceptions": [
+        "Giving 4096.",
+        "Treating the value as signed."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_1c",
+      "short_name": "0478/12 O/N/25 - Q1(c) - Hexadecimal to Binary",
+      "answer_type": "prose",
+      "question": "Convert the hexadecimal codes 429 and 1A3 into 12-bit binary numbers.",
+      "student_context": "Give one 12-bit binary value for each hexadecimal code.",
+      "ai_context": "Award one mark for each correct 12-bit conversion. Require leading zeroes where needed.",
+      "max_marks": 2,
+      "topic": "Hexadecimal and Binary",
+      "answer_key": "429 = 010000101001. 1A3 = 000110100011.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Converts 429 to 0100 0010 1001."
+        },
+        {
+          "marks": 1,
+          "criterion": "Converts 1A3 to 0001 1010 0011."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept binary values with or without spaces between nibbles."
+      ],
+      "common_misconceptions": [
+        "Omitting leading zeroes.",
+        "Converting hexadecimal digits as denary digits."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_1d",
+      "short_name": "0478/12 O/N/25 - Q1(d) - Binary to Hexadecimal",
+      "answer_type": "prose",
+      "question": "Convert the 12-bit binary numbers 100010100001 and 011100001011 into hexadecimal numbers.",
+      "student_context": "Give one three-digit hexadecimal value for each binary number.",
+      "ai_context": "Award one mark for each correct hexadecimal conversion.",
+      "max_marks": 2,
+      "topic": "Hexadecimal and Binary",
+      "answer_key": "100010100001 = 8A1. 011100001011 = 70B.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Converts 1000 1010 0001 to 8A1."
+        },
+        {
+          "marks": 1,
+          "criterion": "Converts 0111 0000 1011 to 70B."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept lowercase hexadecimal letters."
+      ],
+      "common_misconceptions": [
+        "Grouping bits incorrectly instead of using nibbles.",
+        "Dropping the middle zero in 70B."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_1ei",
+      "short_name": "0478/12 O/N/25 - Q1(e)(i) - Hardware",
+      "answer_type": "prose",
+      "question": "A barcode scanner sends a toy code to an item of hardware that receives the code and finds it in a database. The item of hardware is built into a single chip. Identify the name of this item of hardware.",
+      "student_context": "Give the hardware name.",
+      "ai_context": "Require microprocessor.",
+      "max_marks": 1,
+      "topic": "Hardware",
+      "answer_key": "Microprocessor",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States microprocessor."
+        }
+      ],
+      "acceptable_alternatives": [],
+      "common_misconceptions": [
+        "Giving barcode scanner instead of the processing hardware."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_1eiii",
+      "short_name": "0478/12 O/N/25 - Q1(e)(iii) - Sensors",
+      "answer_type": "prose",
+      "question": "Identify the type of sensor that a barcode scanner could contain.",
+      "student_context": "Give the sensor type.",
+      "ai_context": "Require light sensor or an equivalent clear answer.",
+      "max_marks": 1,
+      "topic": "Sensors",
+      "answer_key": "Light sensor",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States light sensor."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept light."
+      ],
+      "common_misconceptions": [
+        "Giving pressure sensor."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_1eiv",
+      "short_name": "0478/12 O/N/25 - Q1(e)(iv) - Optical Storage",
+      "answer_type": "prose",
+      "question": "Describe how data is written to an optical storage disk.",
+      "student_context": "Describe the physical process used when writing data to an optical disk.",
+      "max_marks": 4,
+      "topic": "Optical Storage",
+      "answer_key": "The disk is spun while a laser is shone onto it. The laser burns pits into a spiral track. Pits and lands represent binary values.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that the disk is spun."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that a laser is shone onto the disk."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that pits are burnt into the disk."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that pits are arranged in a spiral track."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that pits and lands represent binary values."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit any four distinct valid points from the writing process."
+      ],
+      "common_misconceptions": [
+        "Describing magnetic storage.",
+        "Only describing how the disk is read."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_2a",
+      "short_name": "0478/12 O/N/25 - Q2(a) - Binary Addition",
+      "answer_type": "prose",
+      "question": "Add the binary numbers 11110101 and 00111001 using binary addition. Give your answer in binary, show your working, and state whether an overflow error occurs.",
+      "student_context": "Use 8-bit binary addition. Include carries or another clear method.",
+      "ai_context": "Award one mark for each correct nibble of the 8-bit result, one mark for a valid method such as four or five correct carries, and one mark for identifying overflow.",
+      "max_marks": 4,
+      "topic": "Binary Addition",
+      "answer_key": "11110101 + 00111001 = 1 00101110. The stored 8-bit result is 00101110 and an overflow error occurs. Carries should be shown or clearly explained.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Gives the correct left nibble 0010 in the 8-bit result."
+        },
+        {
+          "marks": 1,
+          "criterion": "Gives the correct right nibble 1110 in the 8-bit result."
+        },
+        {
+          "marks": 1,
+          "criterion": "Shows a correct binary-addition method, such as four or five correct carries."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies that an overflow error occurs."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept the full result written as 100101110 or 1 0010 1110 if the 8-bit stored result and overflow are clear."
+      ],
+      "common_misconceptions": [
+        "Ignoring the ninth bit and failing to identify overflow.",
+        "Giving the result without showing working."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_2b",
+      "short_name": "0478/12 O/N/25 - Q2(b) - Logical Shift",
+      "answer_type": "prose",
+      "question": "A logical right shift of three places is performed on the binary number 11110101. Give the binary number stored after the shift and its denary value. Show your working.",
+      "student_context": "Use an 8-bit result after the logical right shift.",
+      "ai_context": "Award one mark for shifted binary 00011110, one mark for a valid denary-conversion method, and one mark for denary 30.",
+      "max_marks": 3,
+      "topic": "Logical Shift",
+      "answer_key": "11110101 shifted logically right by three places becomes 00011110. This is 16 + 8 + 4 + 2 = 30.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Gives the shifted binary number 00011110."
+        },
+        {
+          "marks": 1,
+          "criterion": "Shows a valid conversion method, such as 16 + 8 + 4 + 2."
+        },
+        {
+          "marks": 1,
+          "criterion": "Gives the denary value 30."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept equivalent valid conversion working."
+      ],
+      "common_misconceptions": [
+        "Performing a left shift.",
+        "Filling vacated bits with ones."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_3a",
+      "short_name": "0478/12 O/N/25 - Q3(a) - Assembly Language",
+      "answer_type": "prose",
+      "question": "Describe what is meant by assembly language.",
+      "student_context": "Give two characteristics.",
+      "max_marks": 2,
+      "topic": "Assembly Language",
+      "answer_key": "Assembly language is a low-level language that uses mnemonics and can be used to communicate directly with computer hardware.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that assembly language is a low-level language."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that it uses mnemonics."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that it is used to communicate directly with hardware."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit any two distinct valid characteristics from the mark scheme."
+      ],
+      "common_misconceptions": [
+        "Calling assembly language a high-level language.",
+        "Confusing assembly language with machine code."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_3b",
+      "short_name": "0478/12 O/N/25 - Q3(b) - Translators",
+      "answer_type": "prose",
+      "question": "Identify the translator needed for assembly language.",
+      "student_context": "Give the translator name.",
+      "ai_context": "Require assembler.",
+      "max_marks": 1,
+      "topic": "Translators",
+      "answer_key": "Assembler",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States assembler."
+        }
+      ],
+      "acceptable_alternatives": [],
+      "common_misconceptions": [
+        "Giving compiler or interpreter."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_4b",
+      "short_name": "0478/12 O/N/25 - Q4(b) - CPU Cores",
+      "answer_type": "prose",
+      "question": "Describe what is meant by a CPU core.",
+      "student_context": "Give two relevant characteristics of a core.",
+      "max_marks": 2,
+      "topic": "CPU Architecture",
+      "answer_key": "A core is an independent or self-contained processing unit. It executes instructions or performs the fetch-decode-execute cycle and contains registers or processing units.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that a core is an independent or self-contained processing unit."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that it executes instructions or performs the fetch-decode-execute cycle."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that it contains registers or units used to process data."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit any two distinct valid points."
+      ],
+      "common_misconceptions": [
+        "Only stating the processor speed.",
+        "Confusing a core with a register."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_4c",
+      "short_name": "0478/12 O/N/25 - Q4(c) - CPU Performance",
+      "answer_type": "prose",
+      "question": "Explain two ways that the performance of a CPU could be increased.",
+      "student_context": "For each way, name the change and explain why it improves performance.",
+      "ai_context": "Award marks for paired change-and-effect explanations. Award a maximum of two marks if the answer names changes without explaining their effects.",
+      "max_marks": 4,
+      "topic": "CPU Performance",
+      "answer_key": "Performance can be increased by adding more cores so more instructions can be processed simultaneously, increasing clock speed so more instructions can be processed per second, or increasing cache so more frequently used data and instructions can be accessed faster than from RAM.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Identifies one valid change: increase the number of cores, clock speed, or cache size."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains the performance effect of the first change."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies a second distinct valid change."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains the performance effect of the second change."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Award up to two marks for valid changes without expansion.",
+        "Credit clear examples of increased values."
+      ],
+      "common_misconceptions": [
+        "Listing changes without explaining why they improve performance.",
+        "Saying that larger secondary storage directly speeds up CPU execution."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_5a",
+      "short_name": "0478/12 O/N/25 - Q5(a) - Interrupts",
+      "answer_type": "prose",
+      "question": "An interrupt is sent to the CPU every time a mouse button is clicked. Identify the name of this type of interrupt.",
+      "student_context": "Give the interrupt type.",
+      "ai_context": "Require hardware interrupt.",
+      "max_marks": 1,
+      "topic": "Interrupts",
+      "answer_key": "Hardware interrupt",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States hardware interrupt."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept hardware."
+      ],
+      "common_misconceptions": [
+        "Giving software interrupt."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_5b",
+      "short_name": "0478/12 O/N/25 - Q5(b) - Interrupt Handling",
+      "answer_type": "prose",
+      "question": "An interrupt is placed in a queue. Explain how the interrupt is serviced after it is placed in the queue.",
+      "student_context": "Describe the CPU's interrupt-handling process.",
+      "max_marks": 4,
+      "topic": "Interrupts",
+      "answer_key": "The priority is checked. If the interrupt has a higher priority, the current process is halted and stored on a stack. The interrupt and its source are checked, then the interrupt service routine or interrupt handler is called. If its priority is not higher, the current process continues.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Explains that the priority of the interrupt is checked."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that a higher-priority interrupt halts the current process."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the current process is stored on a stack."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the interrupt is fetched."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the source of the interrupt is checked."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the interrupt service routine or interrupt handler is called."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that a lower-priority interrupt allows the current process to continue."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit any four distinct valid points from the interrupt-servicing process."
+      ],
+      "common_misconceptions": [
+        "Saying all interrupts immediately replace the current process regardless of priority.",
+        "Omitting the interrupt handler or ISR."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_5ci",
+      "short_name": "0478/12 O/N/25 - Q5(c)(i) - Serial Transmission",
+      "answer_type": "prose",
+      "question": "Explain how data is sent using a universal serial bus (USB) connection.",
+      "student_context": "Describe serial transmission over the USB connection.",
+      "max_marks": 2,
+      "topic": "Data Transmission",
+      "answer_key": "Data is sent one bit at a time down a single wire.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that data is sent one bit at a time."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that data is sent down a single wire."
+        }
+      ],
+      "acceptable_alternatives": [],
+      "common_misconceptions": [
+        "Describing parallel transmission."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_5cii",
+      "short_name": "0478/12 O/N/25 - Q5(c)(ii) - USB",
+      "answer_type": "prose",
+      "question": "Give two benefits of using a USB connection for a mouse.",
+      "student_context": "Give two distinct benefits.",
+      "max_marks": 2,
+      "topic": "USB",
+      "answer_key": "Examples include powering the mouse from the device, universal connection, backward compatibility, reduced chance of skew or errors, support for different or adequate transmission speeds, a connector that cannot be inserted incorrectly, and automatic device detection or driver installation.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States one valid USB benefit."
+        },
+        {
+          "marks": 1,
+          "criterion": "States a second distinct valid USB benefit."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept device power, universal connection, backward compatibility, reduced skew or errors, supported speeds, correct-way insertion, automatic detection, or automatic driver installation."
+      ],
+      "common_misconceptions": [
+        "Giving the same benefit twice.",
+        "Describing a drawback instead of a benefit."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_5ciii",
+      "short_name": "0478/12 O/N/25 - Q5(c)(iii) - USB",
+      "answer_type": "prose",
+      "question": "Give one drawback of using a USB connection for a mouse.",
+      "student_context": "Give one drawback.",
+      "max_marks": 1,
+      "topic": "USB",
+      "answer_key": "A USB connection can be slower than a parallel connection, or the wire can get in the way or limit mouse movement.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that serial USB can be slower than a parallel connection, or that the wire can get in the way or limit movement."
+        }
+      ],
+      "acceptable_alternatives": [],
+      "common_misconceptions": [
+        "Giving a USB benefit."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_6a",
+      "short_name": "0478/12 O/N/25 - Q6(a) - URLs",
+      "answer_type": "prose",
+      "question": "For the URL https://www.cieclothes.com/index.html, identify the protocol, the domain name, and the web page or file name.",
+      "student_context": "Give the three parts in this order: protocol, domain name, web page or file name.",
+      "ai_context": "This is a typed adaptation of the labelled URL item. Award one mark for each correctly identified part.",
+      "max_marks": 3,
+      "topic": "URLs",
+      "answer_key": "Protocol: https. Domain name: www.cieclothes.com. Web page or file name: index.html.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Identifies https as the protocol."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies www.cieclothes.com as the domain name."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies index.html as the web page name or file name."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept HTTPS with harmless capitalization.",
+        "Accept domain cieclothes.com if the intended domain is clear."
+      ],
+      "common_misconceptions": [
+        "Calling index.html the domain name.",
+        "Calling www the protocol."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_6b",
+      "short_name": "0478/12 O/N/25 - Q6(b) - Proxy Servers",
+      "answer_type": "prose",
+      "question": "Describe how a proxy server can stop a distributed denial of service (DDoS) attack reaching a web server.",
+      "student_context": "Explain three relevant actions a proxy server can take.",
+      "max_marks": 3,
+      "topic": "Proxy Servers",
+      "answer_key": "A proxy server examines incoming requests. It can limit the number or rate of requests sent to the web server, use cached responses instead of forwarding every request, and block requests from certain IP addresses.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Explains that the proxy examines requests or incoming transmissions."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the proxy limits the rate or number of requests sent to the server."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the proxy can use caching to respond without forwarding a request to the server."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the proxy can block requests from certain IP addresses."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit any three distinct valid points from the mark scheme."
+      ],
+      "common_misconceptions": [
+        "Only defining a DDoS attack without explaining the proxy's role.",
+        "Saying the proxy increases the number of requests."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_6c",
+      "short_name": "0478/12 O/N/25 - Q6(c) - Web Technologies",
+      "answer_type": "prose",
+      "question": "Complete the following web-technology definitions. State: (1) what HTML is used for; (2) what a DNS does; (3) the term for a numerical address used to locate a web server; (4) a secure protocol used to transmit data to and from a web server; and (5) the software used to display web pages.",
+      "student_context": "Answer all five parts clearly. This is a typed version of a table-completion question.",
+      "ai_context": "Award one mark for each correct definition or term in the correct numbered position.",
+      "max_marks": 5,
+      "topic": "Web Technologies",
+      "answer_key": "1. HTML is a language used to write or author web pages. 2. A DNS stores domain names or URLs and their corresponding IP addresses, or returns the matching IP address to the browser. 3. IP address. 4. SSL, TLS, or HTTPS. 5. Web browser.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Explains that HTML is a language used to write or author web pages."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that a DNS stores or provides the matching IP address for a domain name or URL."
+        },
+        {
+          "marks": 1,
+          "criterion": "States IP address for the numerical address used to locate a web server."
+        },
+        {
+          "marks": 1,
+          "criterion": "States SSL, TLS, or HTTPS as a secure protocol for web-server data transmission."
+        },
+        {
+          "marks": 1,
+          "criterion": "States web browser as the software used to display web pages."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept SSL, TLS, or HTTPS for the secure protocol.",
+        "Accept clear equivalent wording for the HTML and DNS descriptions."
+      ],
+      "common_misconceptions": [
+        "Confusing DNS with an IP address.",
+        "Giving search engine instead of web browser."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_6d",
+      "short_name": "0478/12 O/N/25 - Q6(d) - Cookies",
+      "answer_type": "prose",
+      "question": "Complete the statements about cookies: Cookies are stored and managed by the ________. ________ cookies are temporary files created when a user visits a web page. ________ cookies are permanent files created when a user visits a web page.",
+      "student_context": "Give the three missing terms in order.",
+      "ai_context": "Require web browser, session, persistent in the correct order.",
+      "max_marks": 3,
+      "topic": "Cookies",
+      "answer_key": "Web browser; session; persistent.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States web browser for the software that stores and manages cookies."
+        },
+        {
+          "marks": 1,
+          "criterion": "States session for temporary cookies."
+        },
+        {
+          "marks": 1,
+          "criterion": "States persistent for permanent cookies."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept answers separated by commas, semicolons, labels, or line breaks if the order is clear."
+      ],
+      "common_misconceptions": [
+        "Reversing session and persistent cookies.",
+        "Giving DNS instead of web browser."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_7a",
+      "short_name": "0478/12 O/N/25 - Q7(a) - Robotics",
+      "answer_type": "prose",
+      "question": "A smart speaker can take voice commands as input. Explain why the smart speaker cannot be described as a robot.",
+      "student_context": "Give three linked points.",
+      "max_marks": 3,
+      "topic": "Robotics",
+      "answer_key": "The smart speaker does not have a mechanical structure and does not have actuators, so it cannot move itself.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States that the smart speaker does not have a mechanical structure."
+        },
+        {
+          "marks": 1,
+          "criterion": "States that it does not have actuators."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that it cannot move itself."
+        }
+      ],
+      "acceptable_alternatives": [],
+      "common_misconceptions": [
+        "Saying any device with artificial intelligence is automatically a robot.",
+        "Only stating that the speaker has no screen."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_7b",
+      "short_name": "0478/12 O/N/25 - Q7(b) - Input Devices",
+      "answer_type": "prose",
+      "question": "Identify the input device that allows voice commands to be used as input by a smart speaker.",
+      "student_context": "Give the input-device name.",
+      "ai_context": "Require microphone.",
+      "max_marks": 1,
+      "topic": "Input Devices",
+      "answer_key": "Microphone",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States microphone."
+        }
+      ],
+      "acceptable_alternatives": [],
+      "common_misconceptions": [
+        "Giving speaker."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_7c",
+      "short_name": "0478/12 O/N/25 - Q7(c) - Machine Learning",
+      "answer_type": "prose",
+      "question": "Explain how a smart speaker can use machine learning to improve voice-command input.",
+      "student_context": "Describe four relevant ways that training data, pattern recognition, storage, adaptation, or learning can improve recognition.",
+      "max_marks": 4,
+      "topic": "Machine Learning",
+      "answer_key": "The smart speaker can gather examples from the same or different voices, analyse patterns, adapt its processes, store successful and unsuccessful commands, learn a user's voice, learn different ways of making a request, learn pronunciations or accents, and learn to ignore background noise.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Explains that the system gathers voice data or examples, such as different words or different voices."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the system analyses or identifies patterns in voices."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the system adapts its own processes."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the system can learn to identify a user's voice."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the system stores successful or unsuccessful voice commands."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the system can learn different ways of making the same request."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the system can learn different pronunciations or accents."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the system can learn by listening to many different voices."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that the system can learn to ignore background or environmental noise."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit any four distinct valid points from the mark scheme."
+      ],
+      "common_misconceptions": [
+        "Only saying that the speaker uses artificial intelligence without explaining learning.",
+        "Describing speech output instead of voice-command input."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_7d",
+      "short_name": "0478/12 O/N/25 - Q7(d) - Embedded Systems",
+      "answer_type": "prose",
+      "question": "Explain why a smart speaker is an embedded system.",
+      "student_context": "Give two relevant embedded-system characteristics.",
+      "max_marks": 2,
+      "topic": "Embedded Systems",
+      "answer_key": "A smart speaker has a single or limited function, uses dedicated hardware and a microprocessor, and its function is not easily changed.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Explains that it has a single, limited, or dedicated function."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that it has dedicated hardware."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that it has a microprocessor."
+        },
+        {
+          "marks": 1,
+          "criterion": "Explains that its function is not easily changed."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Credit any two distinct valid embedded-system characteristics."
+      ],
+      "common_misconceptions": [
+        "Only saying that the speaker is electronic.",
+        "Describing a general-purpose computer."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_7e",
+      "short_name": "0478/12 O/N/25 - Q7(e) - Cloud Storage",
+      "answer_type": "prose",
+      "question": "Give two advantages of storing music and audio books for a smart speaker in cloud storage.",
+      "student_context": "Give two distinct advantages.",
+      "max_marks": 2,
+      "topic": "Cloud Storage",
+      "answer_key": "Examples include easy access from any smart speaker, no need to buy or maintain local secondary storage, reduced local storage requirements allowing a smaller device, almost unlimited storage, and easy expansion of storage capacity.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States one valid advantage of cloud storage for the smart-speaker content."
+        },
+        {
+          "marks": 1,
+          "criterion": "States a second distinct valid advantage."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept access from any smart speaker, no purchase or maintenance of local storage, reduced local storage needs, smaller device, large capacity, or easy expansion."
+      ],
+      "common_misconceptions": [
+        "Giving two versions of the same advantage.",
+        "Claiming cloud storage always works without an internet connection."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_7fi",
+      "short_name": "0478/12 O/N/25 - Q7(f)(i) - Transmission Errors",
+      "answer_type": "prose",
+      "question": "Explain two ways that errors may occur in data while music or audio-book data is transmitted from cloud storage.",
+      "student_context": "Give two distinct transmission-error examples.",
+      "max_marks": 2,
+      "topic": "Transmission Errors",
+      "answer_key": "Examples include data being lost, gained, or changed; skewing; interference; crosstalk; data collisions; and packets timing out or reaching their hop count.",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "Identifies one valid way that a transmission error may occur."
+        },
+        {
+          "marks": 1,
+          "criterion": "Identifies a second distinct valid way that a transmission error may occur."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept lost, gained, or changed data; skewing; interference; crosstalk; collisions; packet timeout; or hop-count exhaustion."
+      ],
+      "common_misconceptions": [
+        "Giving error-detection methods instead of causes of errors.",
+        "Giving the same error in two different phrasings."
+      ]
+    },
+    {
+      "id": "0478_12_ON25_7fii",
+      "short_name": "0478/12 O/N/25 - Q7(f)(ii) - Error Detection",
+      "answer_type": "prose",
+      "question": "Give two error-detection methods that could be used to check for errors in data after transmission.",
+      "student_context": "Give two distinct methods.",
+      "max_marks": 2,
+      "topic": "Error Detection",
+      "answer_key": "Examples include parity byte check, parity block check, checksum, echo check, and automatic repeat query (ARQ).",
+      "mark_scheme": [
+        {
+          "marks": 1,
+          "criterion": "States one valid error-detection method."
+        },
+        {
+          "marks": 1,
+          "criterion": "States a second distinct valid error-detection method."
+        }
+      ],
+      "acceptable_alternatives": [
+        "Accept parity byte check, parity block check, checksum, echo check, or ARQ."
+      ],
+      "common_misconceptions": [
+        "Giving encryption as an error-detection method.",
+        "Giving the same parity method twice."
+      ]
+    }
+  ]
+}
